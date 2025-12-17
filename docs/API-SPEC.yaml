@@ -1,0 +1,647 @@
+openapi: 3.0.3
+info:
+  title: JobMatch Lite API
+  description: |
+    Backend API for JobMatch Lite - A resume-to-job description matching service.
+
+    ## Features
+    - Resume parsing and text extraction (PDF/DOCX)
+    - AI-powered matching analysis via OpenRouter
+    - PDF report generation using Puppeteer
+
+    ## Rate Limits
+    - `/api/analyze`: 10 requests per minute per IP
+    - `/api/generate-pdf`: 5 requests per minute per IP
+    - `/api/health`: No rate limit
+
+    ## File Limits
+    - Maximum file size: 5MB
+    - Supported formats: PDF (.pdf), Word (.docx)
+
+    ## Authentication
+    No authentication required for V1. Rate limiting is IP-based.
+  version: 1.0.0
+  contact:
+    name: JobMatch Lite Support
+    email: support@jobmatch-lite.example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://jobmatch-lite-api.vercel.app
+    description: Production server
+  - url: http://localhost:3001
+    description: Local development server
+
+tags:
+  - name: Analysis
+    description: Resume analysis and matching operations
+  - name: Reports
+    description: PDF report generation
+  - name: System
+    description: System health and status endpoints
+
+paths:
+  /api/analyze:
+    post:
+      operationId: analyzeResume
+      tags:
+        - Analysis
+      summary: Analyze resume against job description
+      description: |
+        Parses the uploaded resume file, extracts text content, and uses AI to
+        analyze how well the resume matches the provided job description.
+
+        ## Processing Steps
+        1. Validate file type and size
+        2. Parse resume file (PDF or DOCX)
+        3. Extract text content
+        4. Send to OpenRouter AI for analysis
+        5. Return match score and detailed findings
+
+        ## Rate Limit
+        10 requests per minute per IP address
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AnalyzeRequest'
+            encoding:
+              resume:
+                contentType: application/pdf, application/vnd.openxmlformats-officedocument.wordprocessingml.document
+      responses:
+        '200':
+          description: Analysis completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalysisResponse'
+              examples:
+                highMatch:
+                  summary: High match score example
+                  value:
+                    success: true
+                    data:
+                      score: 85
+                      explanation: "The candidate demonstrates strong alignment with the job requirements. Their 5+ years of React experience directly matches the senior frontend developer position requirements."
+                      keyFindings:
+                        strengths:
+                          - "5+ years React/TypeScript experience"
+                          - "Previous team leadership experience"
+                          - "Strong portfolio of SaaS products"
+                        gaps:
+                          - "No mentioned experience with GraphQL (preferred skill)"
+                          - "AWS certification would strengthen application"
+                        suggestions:
+                          - "Highlight any GraphQL projects in cover letter"
+                          - "Consider AWS Solutions Architect certification"
+                      processingTime: 2341
+                lowMatch:
+                  summary: Low match score example
+                  value:
+                    success: true
+                    data:
+                      score: 35
+                      explanation: "The candidate's background is primarily in backend development, while the position requires frontend expertise."
+                      keyFindings:
+                        strengths:
+                          - "Strong programming fundamentals"
+                          - "Experience with JavaScript"
+                        gaps:
+                          - "No React or frontend framework experience"
+                          - "Missing CSS/styling expertise"
+                        suggestions:
+                          - "Take React courses to build frontend skills"
+                          - "Create frontend projects for portfolio"
+                      processingTime: 1892
+        '400':
+          description: Bad request - validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missingFile:
+                  summary: Missing resume file
+                  value:
+                    success: false
+                    error:
+                      code: "VALIDATION_ERROR"
+                      message: "Resume file is required"
+                      details:
+                        field: "resume"
+                        reason: "File not provided"
+                invalidFileType:
+                  summary: Invalid file type
+                  value:
+                    success: false
+                    error:
+                      code: "INVALID_FILE_TYPE"
+                      message: "Unsupported file type. Please upload a PDF or DOCX file."
+                      details:
+                        field: "resume"
+                        allowedTypes:
+                          - "application/pdf"
+                          - "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        receivedType: "image/png"
+                fileTooLarge:
+                  summary: File exceeds size limit
+                  value:
+                    success: false
+                    error:
+                      code: "FILE_TOO_LARGE"
+                      message: "File size exceeds the 5MB limit"
+                      details:
+                        field: "resume"
+                        maxSize: 5242880
+                        receivedSize: 8388608
+        '422':
+          description: Unprocessable entity - file parsing error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                corruptFile:
+                  summary: Corrupt or unreadable file
+                  value:
+                    success: false
+                    error:
+                      code: "FILE_PARSE_ERROR"
+                      message: "Unable to parse the uploaded file. The file may be corrupted or password-protected."
+                      details:
+                        reason: "PDF parsing failed"
+                emptyFile:
+                  summary: Empty file content
+                  value:
+                    success: false
+                    error:
+                      code: "EMPTY_CONTENT"
+                      message: "No text content could be extracted from the resume"
+                      details:
+                        reason: "File appears to be empty or contains only images"
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error:
+                  code: "RATE_LIMIT_EXCEEDED"
+                  message: "Too many requests. Please try again later."
+                  details:
+                    retryAfter: 60
+                    limit: 10
+                    window: "1 minute"
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+              description: Seconds until rate limit resets
+            RateLimit-Limit:
+              schema:
+                type: integer
+              description: Maximum requests allowed per window
+            RateLimit-Remaining:
+              schema:
+                type: integer
+              description: Remaining requests in current window
+            RateLimit-Reset:
+              schema:
+                type: integer
+              description: Unix timestamp when the rate limit resets
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error:
+                  code: "INTERNAL_ERROR"
+                  message: "An unexpected error occurred. Please try again later."
+                  requestId: "req_abc123xyz"
+        '502':
+          description: AI service error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error:
+                  code: "AI_SERVICE_ERROR"
+                  message: "Unable to connect to AI analysis service. Please try again."
+                  details:
+                    service: "OpenRouter"
+                    reason: "Service temporarily unavailable"
+        '504':
+          description: Gateway timeout
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error:
+                  code: "TIMEOUT"
+                  message: "The analysis request timed out. Please try again."
+
+  /api/generate-pdf:
+    post:
+      operationId: generatePdfReport
+      tags:
+        - Reports
+      summary: Generate PDF report from analysis results
+      description: |
+        Generates a downloadable PDF report from the analysis results.
+        Uses server-side rendering with Puppeteer to create a professionally formatted PDF.
+
+        ## Rate Limit
+        5 requests per minute per IP address
+
+        ## Processing
+        1. Render HTML template with analysis data
+        2. Use Puppeteer/Chromium to generate PDF
+        3. Stream PDF back to client
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GeneratePdfRequest'
+            examples:
+              standardReport:
+                summary: Standard report generation
+                value:
+                  score: 85
+                  explanation: "The candidate demonstrates strong alignment with the job requirements..."
+                  jobTitle: "Senior Frontend Developer"
+                  companyName: "TechCorp Inc."
+                  candidateName: "John Doe"
+                  keyFindings:
+                    strengths:
+                      - "5+ years React/TypeScript experience"
+                      - "Previous team leadership experience"
+                    gaps:
+                      - "No mentioned experience with GraphQL"
+                    suggestions:
+                      - "Highlight any GraphQL projects in cover letter"
+                  analyzedAt: "2025-12-17T10:30:00Z"
+      responses:
+        '200':
+          description: PDF generated successfully
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+              description: Attachment filename
+              example: 'attachment; filename="jobmatch-report-2025-12-17.pdf"'
+            Content-Length:
+              schema:
+                type: integer
+              description: Size of PDF in bytes
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error:
+                  code: "VALIDATION_ERROR"
+                  message: "Invalid analysis data provided"
+                  details:
+                    field: "score"
+                    reason: "Score must be between 0 and 100"
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error:
+                  code: "RATE_LIMIT_EXCEEDED"
+                  message: "Too many requests. Please try again later."
+                  details:
+                    retryAfter: 60
+                    limit: 5
+                    window: "1 minute"
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+              description: Seconds until rate limit resets
+        '500':
+          description: PDF generation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error:
+                  code: "PDF_GENERATION_ERROR"
+                  message: "Failed to generate PDF report. Please try again."
+        '504':
+          description: Gateway timeout
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error:
+                  code: "TIMEOUT"
+                  message: "PDF generation timed out. Please try again."
+
+  /api/health:
+    get:
+      operationId: healthCheck
+      tags:
+        - System
+      summary: Health check endpoint
+      description: |
+        Returns the current health status of the API service.
+        Use this endpoint to verify the service is running and check version information.
+
+        No rate limiting is applied to this endpoint.
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: "healthy"
+                version: "1.0.0"
+                timestamp: "2025-12-17T10:30:00Z"
+                services:
+                  openRouter: "connected"
+                  puppeteer: "ready"
+                uptime: 86400
+        '503':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: "unhealthy"
+                version: "1.0.0"
+                timestamp: "2025-12-17T10:30:00Z"
+                services:
+                  openRouter: "disconnected"
+                  puppeteer: "ready"
+                uptime: 86400
+
+components:
+  schemas:
+    AnalyzeRequest:
+      type: object
+      required:
+        - resume
+        - jobDescription
+      properties:
+        resume:
+          type: string
+          format: binary
+          description: |
+            Resume file to analyze.
+            - Supported formats: PDF (.pdf), DOCX (.docx)
+            - Maximum size: 5MB
+        jobDescription:
+          type: string
+          minLength: 100
+          maxLength: 10000
+          description: |
+            The job description to match the resume against.
+            - Minimum 100 characters
+            - Maximum 10,000 characters
+          example: |
+            We are looking for a Senior Frontend Developer with 5+ years of experience
+            in React and TypeScript. The ideal candidate will have experience with
+            modern frontend tooling, state management, and responsive design...
+
+    AnalysisResponse:
+      type: object
+      required:
+        - success
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/AnalysisResult'
+
+    AnalysisResult:
+      type: object
+      required:
+        - score
+        - explanation
+        - keyFindings
+        - processingTime
+      properties:
+        score:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Match score from 0-100
+          example: 85
+        explanation:
+          type: string
+          description: Detailed explanation of the match analysis
+          example: "The candidate demonstrates strong alignment with the job requirements..."
+        keyFindings:
+          $ref: '#/components/schemas/KeyFindings'
+        processingTime:
+          type: integer
+          description: Processing time in milliseconds
+          example: 2341
+
+    KeyFindings:
+      type: object
+      required:
+        - strengths
+        - gaps
+        - suggestions
+      properties:
+        strengths:
+          type: array
+          items:
+            type: string
+          description: List of candidate strengths matching the job
+          example:
+            - "5+ years React/TypeScript experience"
+            - "Previous team leadership experience"
+        gaps:
+          type: array
+          items:
+            type: string
+          description: List of gaps or missing qualifications
+          example:
+            - "No mentioned experience with GraphQL"
+        suggestions:
+          type: array
+          items:
+            type: string
+          description: Suggestions for improving the application
+          example:
+            - "Highlight any GraphQL projects in cover letter"
+
+    GeneratePdfRequest:
+      type: object
+      required:
+        - score
+        - explanation
+        - keyFindings
+      properties:
+        score:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Match score from the analysis
+          example: 85
+        explanation:
+          type: string
+          description: Detailed explanation from the analysis
+          example: "The candidate demonstrates strong alignment..."
+        jobTitle:
+          type: string
+          maxLength: 200
+          description: Job title being applied for (optional)
+          example: "Senior Frontend Developer"
+        companyName:
+          type: string
+          maxLength: 200
+          description: Company name (optional)
+          example: "TechCorp Inc."
+        candidateName:
+          type: string
+          maxLength: 200
+          description: Candidate's name for the report (optional)
+          example: "John Doe"
+        keyFindings:
+          $ref: '#/components/schemas/KeyFindings'
+        analyzedAt:
+          type: string
+          format: date-time
+          description: When the analysis was performed
+          example: "2025-12-17T10:30:00Z"
+
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - version
+        - timestamp
+      properties:
+        status:
+          type: string
+          enum:
+            - healthy
+            - degraded
+            - unhealthy
+          description: Overall service health status
+          example: "healthy"
+        version:
+          type: string
+          description: API version
+          example: "1.0.0"
+        timestamp:
+          type: string
+          format: date-time
+          description: Current server timestamp
+          example: "2025-12-17T10:30:00Z"
+        services:
+          type: object
+          properties:
+            openRouter:
+              type: string
+              enum:
+                - connected
+                - disconnected
+              description: OpenRouter AI service status
+            puppeteer:
+              type: string
+              enum:
+                - ready
+                - unavailable
+              description: Puppeteer/Chromium status
+        uptime:
+          type: integer
+          description: Service uptime in seconds
+          example: 86400
+
+    ErrorResponse:
+      type: object
+      required:
+        - success
+        - error
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          $ref: '#/components/schemas/ErrorDetail'
+
+    ErrorDetail:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Machine-readable error code
+          enum:
+            - VALIDATION_ERROR
+            - INVALID_FILE_TYPE
+            - FILE_TOO_LARGE
+            - FILE_PARSE_ERROR
+            - EMPTY_CONTENT
+            - RATE_LIMIT_EXCEEDED
+            - AI_SERVICE_ERROR
+            - PDF_GENERATION_ERROR
+            - INTERNAL_ERROR
+            - TIMEOUT
+          example: "VALIDATION_ERROR"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Resume file is required"
+        details:
+          type: object
+          additionalProperties: true
+          description: Additional error context
+          example:
+            field: "resume"
+            reason: "File not provided"
+        requestId:
+          type: string
+          description: Request ID for debugging (on 500 errors)
+          example: "req_abc123xyz"
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: Optional API key for authenticated access (future feature)
+
+security: []
