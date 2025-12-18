@@ -56,7 +56,7 @@ describe('AnalyzeResumeUseCase', () => {
   describe('execute', () => {
     it('should return analysis result with score, explanation, and keyFindings', async () => {
       const file = new File(['test'], 'resume.pdf', { type: 'application/pdf' });
-      const jobDescription = 'Looking for a React developer with 5 years experience';
+      const jobDescription = 'Looking for a React developer with 5 years experience. Must have strong TypeScript skills and experience with modern frontend tooling including webpack, vite, and testing frameworks.';
 
       const result = await useCase.execute(file, jobDescription);
 
