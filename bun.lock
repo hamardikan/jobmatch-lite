@@ -8,8 +8,17 @@
         "typescript": "^5.7.0",
       },
     },
+    "packages/shared": {
+      "name": "@jobmatch/shared",
+      "version": "1.0.0",
+      "devDependencies": {
+        "typescript": "^5.7.0",
+      },
+    },
   },
   "packages": {
+    "@jobmatch/shared": ["@jobmatch/shared@workspace:packages/shared"],
+
     "turbo": ["turbo@2.6.3", "", { "optionalDependencies": { "turbo-darwin-64": "2.6.3", "turbo-darwin-arm64": "2.6.3", "turbo-linux-64": "2.6.3", "turbo-linux-arm64": "2.6.3", "turbo-windows-64": "2.6.3", "turbo-windows-arm64": "2.6.3" }, "bin": { "turbo": "bin/turbo" } }, "sha512-bf6YKUv11l5Xfcmg76PyWoy/e2vbkkxFNBGJSnfdSXQC33ZiUfutYh6IXidc5MhsnrFkWfdNNLyaRk+kHMLlwA=="],
 
     "turbo-darwin-64": ["turbo-darwin-64@2.6.3", "", { "os": "darwin", "cpu": "x64" }, "sha512-BlJJDc1CQ7SK5Y5qnl7AzpkvKSnpkfPmnA+HeU/sgny3oHZckPV2776ebO2M33CYDSor7+8HQwaodY++IINhYg=="],
