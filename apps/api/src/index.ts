@@ -8,6 +8,7 @@ import { Elysia } from 'elysia';
 import { cors } from '@elysiajs/cors';
 import { healthModule } from '@/presentation/modules/health';
 import { analysisModule } from '@/presentation/modules/analysis';
+import { reportModule } from '@/presentation/modules/report';
 import { errorHandler } from '@/presentation/middleware/error-handler';
 
 const app = new Elysia()
@@ -22,6 +23,7 @@ const app = new Elysia()
   .use(errorHandler)
   .use(healthModule)
   .use(analysisModule)
+  .use(reportModule)
   .get('/', () => ({
     message: 'JobMatch Lite API',
     version: '1.0.0',

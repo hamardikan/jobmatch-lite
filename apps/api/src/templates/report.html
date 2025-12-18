@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JobMatch Report</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      color: #1f2937;
+      padding: 40px;
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 32px;
+      padding-bottom: 24px;
+      border-bottom: 2px solid #e5e7eb;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+      color: #2563eb;
+      margin-bottom: 8px;
+    }
+
+    .report-title {
+      font-size: 14px;
+      color: #6b7280;
+    }
+
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      padding: 16px;
+      background: #f9fafb;
+      border-radius: 8px;
+    }
+
+    .meta-item {
+      text-align: center;
+    }
+
+    .meta-label {
+      font-size: 12px;
+      color: #6b7280;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .meta-value {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .score-section {
+      text-align: center;
+      margin: 32px 0;
+    }
+
+    .score-circle {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      font-weight: bold;
+      color: white;
+      margin-bottom: 12px;
+    }
+
+    .score-excellent { background: linear-gradient(135deg, #10b981, #059669); }
+    .score-good { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+    .score-fair { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .score-poor { background: linear-gradient(135deg, #ef4444, #dc2626); }
+
+    .score-label {
+      font-size: 18px;
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+
+    .explanation {
+      margin: 24px 0;
+      padding: 20px;
+      background: #f3f4f6;
+      border-radius: 8px;
+      line-height: 1.6;
+    }
+
+    .section {
+      margin: 24px 0;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .strengths .section-title { color: #059669; }
+    .gaps .section-title { color: #dc2626; }
+    .suggestions .section-title { color: #2563eb; }
+
+    .finding-list {
+      list-style: none;
+    }
+
+    .finding-item {
+      padding: 8px 0;
+      padding-left: 24px;
+      position: relative;
+    }
+
+    .finding-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 14px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .strengths .finding-item::before { background: #10b981; }
+    .gaps .finding-item::before { background: #ef4444; }
+    .suggestions .finding-item::before { background: #3b82f6; }
+
+    .footer {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+      text-align: center;
+      font-size: 12px;
+      color: #9ca3af;
+    }
+
+    @media print {
+      body {
+        padding: 20px;
+      }
+      .page-break {
+        page-break-before: always;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">JobMatch Lite</div>
+    <div class="report-title">Resume Match Analysis Report</div>
+  </div>
+
+  <div class="meta">
+    <div class="meta-item">
+      <div class="meta-label">Candidate</div>
+      <div class="meta-value">{{candidateName}}</div>
+    </div>
+    <div class="meta-item">
+      <div class="meta-label">Position</div>
+      <div class="meta-value">{{jobTitle}}</div>
+    </div>
+    <div class="meta-item">
+      <div class="meta-label">Company</div>
+      <div class="meta-value">{{companyName}}</div>
+    </div>
+    <div class="meta-item">
+      <div class="meta-label">Date</div>
+      <div class="meta-value">{{analyzedAt}}</div>
+    </div>
+  </div>
+
+  <div class="score-section">
+    <div class="score-circle {{scoreClass}}">{{score}}</div>
+    <div class="score-label">{{scoreCategory}} Match</div>
+  </div>
+
+  <div class="explanation">
+    {{explanation}}
+  </div>
+
+  <div class="section strengths">
+    <div class="section-title">✓ Strengths</div>
+    <ul class="finding-list">
+      {{#strengths}}
+      <li class="finding-item">{{.}}</li>
+      {{/strengths}}
+    </ul>
+  </div>
+
+  <div class="section gaps">
+    <div class="section-title">✗ Gaps</div>
+    <ul class="finding-list">
+      {{#gaps}}
+      <li class="finding-item">{{.}}</li>
+      {{/gaps}}
+    </ul>
+  </div>
+
+  <div class="section suggestions">
+    <div class="section-title">→ Suggestions</div>
+    <ul class="finding-list">
+      {{#suggestions}}
+      <li class="finding-item">{{.}}</li>
+      {{/suggestions}}
+    </ul>
+  </div>
+
+  <div class="footer">
+    Generated by JobMatch Lite • {{analyzedAt}}
+  </div>
+</body>
+</html>
