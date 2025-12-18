@@ -1,0 +1,25 @@
+{
+  "name": "@jobmatch/api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --watch src/index.ts",
+    "build": "bun build src/index.ts --outdir dist --target bun",
+    "start": "bun run dist/index.js",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@jobmatch/shared": "workspace:*",
+    "elysia": "^1.2.0",
+    "@elysiajs/cors": "^1.1.0",
+    "mammoth": "^1.8.0",
+    "unpdf": "^0.12.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.7.0"
+  }
+}
