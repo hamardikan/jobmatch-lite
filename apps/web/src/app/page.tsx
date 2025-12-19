@@ -1,17 +1,29 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { JOB_DESCRIPTION_CONSTRAINTS } from '@jobmatch/shared';
 import { JobDescriptionPane } from '@/components/job-description-pane';
 import { ResumeUploader } from '@/components/resume-uploader';
 import { MatchResultCard } from '@/components/match-result-card';
 import { Button } from '@/components/ui/button';
+import { UserMenu } from '@/components/user-menu';
 import { useMatchAnalysis } from '@/hooks/use-match-analysis';
+import { useSession } from '@/lib/auth-client';
 
 export default function HomePage() {
+  const router = useRouter();
+  const { data: session, isPending } = useSession();
   const [jobDescription, setJobDescription] = useState('');
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const { state, analyze, reset, isLoading, isSuccess, result } = useMatchAnalysis();
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isPending && !session) {
+      router.push('/login');
+    }
+  }, [session, isPending, router]);
 
   const isValidJobDescription =
     jobDescription.length >= JOB_DESCRIPTION_CONSTRAINTS.MIN_LENGTH &&
@@ -34,6 +46,20 @@ export default function HomePage() {
     setResumeFile(null);
     reset();
   }, [reset]);
+
+  // Show loading state while checking auth
+  if (isPending) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-primary-200 rounded-full animate-spin border-t-primary-600" />
+      </div>
+    );
+  }
+
+  // Don't render if not authenticated (redirect will happen)
+  if (!session) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -62,6 +88,7 @@ export default function HomePage() {
                 <p className="text-sm text-slate-500">AI-powered resume matching</p>
               </div>
             </div>
+            <UserMenu />
           </div>
         </div>
       </header>
