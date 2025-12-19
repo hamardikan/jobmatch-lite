@@ -9,6 +9,7 @@ import { cors } from '@elysiajs/cors';
 import { healthModule } from '@/presentation/modules/health';
 import { analysisModule } from '@/presentation/modules/analysis';
 import { reportModule } from '@/presentation/modules/report';
+import { historyModule } from '@/presentation/modules/history';
 import { authMiddleware } from '@/presentation/middleware/auth';
 import { errorHandler } from '@/presentation/middleware/error-handler';
 
@@ -26,6 +27,7 @@ const app = new Elysia()
   .use(healthModule)
   .use(analysisModule)
   .use(reportModule)
+  .use(historyModule)
   .get('/', () => ({
     message: 'JobMatch Lite API',
     version: '1.0.0',

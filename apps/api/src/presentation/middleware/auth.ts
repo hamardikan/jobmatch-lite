@@ -10,6 +10,35 @@ import { Elysia } from 'elysia';
 import { auth, type User, type Session } from '@/infrastructure/auth';
 
 /**
+ * Auth context injected into protected routes
+ */
+export interface AuthContext {
+  user: User;
+  session: Session;
+  [key: string]: unknown;
+}
+
+/**
+ * Helper to get session from request headers
+ */
+export async function getAuthSession(
+  headers: Headers | Record<string, string | undefined>
+): Promise<AuthContext | null> {
+  const session = await auth.api.getSession({
+    headers: headers instanceof Headers ? headers : new Headers(headers as Record<string, string>),
+  });
+
+  if (!session) {
+    return null;
+  }
+
+  return {
+    user: session.user,
+    session: session.session,
+  };
+}
+
+/**
  * Auth middleware that:
  * 1. Mounts better-auth routes at /api/auth/*
  * 2. Provides { auth: true } macro for protected routes
@@ -27,11 +56,9 @@ export const authMiddleware = new Elysia({ name: 'auth' })
        * If valid, injects user and session into handler context.
        */
       async resolve({ status, request: { headers } }) {
-        const session = await auth.api.getSession({
-          headers: new Headers(headers),
-        });
+        const authContext = await getAuthSession(headers);
 
-        if (!session) {
+        if (!authContext) {
           return status(401, {
             success: false,
             error: {
@@ -41,16 +68,7 @@ export const authMiddleware = new Elysia({ name: 'auth' })
           });
         }
 
-        return {
-          user: session.user as User,
-          session: session.session as Session,
-        };
+        return authContext;
       },
     },
   });
-
-// Type helper for routes that use auth: true
-export type AuthContext = {
-  user: User;
-  session: Session;
-};

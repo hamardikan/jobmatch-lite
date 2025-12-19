@@ -6,6 +6,7 @@
  * 2. Parse resume file
  * 3. Call AI analyzer
  * 4. Return structured results
+ * 5. Optionally save to history (if userId provided)
  */
 
 import { JOB_DESCRIPTION_CONSTRAINTS } from '@jobmatch/shared';
@@ -13,16 +14,27 @@ import type { AnalysisResult } from '@jobmatch/shared';
 import { AppError } from '@/shared/errors';
 import type { FileParserPort } from '@/application/ports/file-parser.port';
 import type { AIAnalyzerPort } from '@/application/ports/ai-analyzer.port';
+import type { AnalysisRepositoryPort } from '@/application/ports/repository.port';
 import { MatchScore } from '@/domain/analysis/value-objects/match-score';
 import { KeyFindingsVO } from '@/domain/analysis/value-objects/key-findings';
+
+export interface AnalyzeOptions {
+  userId?: string;
+  filename?: string;
+}
 
 export class AnalyzeResumeUseCase {
   constructor(
     private readonly fileParser: FileParserPort,
-    private readonly aiAnalyzer: AIAnalyzerPort
+    private readonly aiAnalyzer: AIAnalyzerPort,
+    private readonly analysisRepository?: AnalysisRepositoryPort
   ) {}
 
-  async execute(file: File, jobDescription: string): Promise<AnalysisResult> {
+  async execute(
+    file: File,
+    jobDescription: string,
+    options: AnalyzeOptions = {}
+  ): Promise<AnalysisResult> {
     const startTime = performance.now();
 
     // Validate job description
@@ -43,12 +55,27 @@ export class AnalyzeResumeUseCase {
 
     const processingTime = Math.round(performance.now() - startTime);
 
-    return {
+    const result: AnalysisResult = {
       score: score.value,
       explanation: aiResult.explanation,
       keyFindings: keyFindings.toPlainObject(),
       processingTime,
     };
+
+    // Save to history if userId is provided
+    if (options.userId && this.analysisRepository) {
+      await this.analysisRepository.save({
+        userId: options.userId,
+        resumeFilename: options.filename || file.name || 'resume',
+        jobDescriptionPreview: jobDescription.slice(0, 200),
+        score: result.score,
+        explanation: result.explanation,
+        keyFindings: result.keyFindings,
+        processingTime: result.processingTime,
+      });
+    }
+
+    return result;
   }
 
   private validateJobDescription(jobDescription: string): void {

@@ -92,4 +92,12 @@ export class AppError extends Error {
       500
     );
   }
+
+  static unauthorized(message = 'Authentication required'): AppError {
+    return new AppError(ErrorCode.UNAUTHORIZED, message, 401);
+  }
+
+  static notFound(message = 'Resource not found'): AppError {
+    return new AppError(ErrorCode.NOT_FOUND, message, 404);
+  }
 }

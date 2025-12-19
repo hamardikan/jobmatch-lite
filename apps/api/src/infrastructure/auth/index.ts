@@ -66,5 +66,6 @@ export const auth = betterAuth({
 
 // Export auth types for use in middleware
 export type Auth = typeof auth;
-export type Session = typeof auth.$Infer.Session;
-export type User = typeof auth.$Infer.Session.user;
+export type AuthSession = typeof auth.$Infer.Session;
+export type Session = AuthSession['session'];
+export type User = AuthSession['user'];
