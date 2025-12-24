@@ -41,10 +41,11 @@ export function UserMenu() {
   };
 
   return (
-    <div className="relative">
+    <div className="relative" data-testid="user-menu">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-100"
+        data-testid="user-menu-button"
       >
         <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-medium">
           {session.user.name?.[0]?.toUpperCase() || session.user.email[0].toUpperCase()}
@@ -83,6 +84,7 @@ export function UserMenu() {
             <button
               onClick={handleSignOut}
               className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+              data-testid="sign-out-button"
             >
               Sign Out
             </button>

@@ -9,9 +9,14 @@
     "test:watch": "turbo test:watch",
     "type-check": "turbo type-check",
     "lint": "turbo lint",
-    "clean": "turbo clean && rm -rf node_modules"
+    "clean": "turbo clean && rm -rf node_modules",
+    "e2e": "playwright test --project=chromium",
+    "e2e:ui": "playwright test --ui",
+    "e2e:headed": "playwright test --headed",
+    "e2e:report": "playwright show-report e2e/playwright-report"
   },
   "devDependencies": {
+    "@playwright/test": "^1.57.0",
     "turbo": "^2.3.0",
     "typescript": "^5.7.0"
   },

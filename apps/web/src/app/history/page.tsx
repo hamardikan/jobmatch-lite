@@ -182,7 +182,7 @@ export default function HistoryPage() {
         )}
 
         {analyses.length === 0 ? (
-          <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
+          <div className="bg-white rounded-xl border border-slate-200 p-12 text-center" data-testid="empty-state">
             <svg
               className="w-16 h-16 text-slate-300 mx-auto mb-4"
               fill="none"
@@ -220,12 +220,14 @@ export default function HistoryPage() {
                       : 'border-slate-200 hover:border-slate-300'
                   }`}
                   onClick={() => setSelectedAnalysis(analysis)}
+                  data-testid="analysis-item"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2">
                         <span
                           className={`px-2 py-1 rounded-full text-sm font-medium ${getScoreColor(analysis.score)}`}
+                          data-testid="score-badge"
                         >
                           {analysis.score}% - {getScoreLabel(analysis.score)}
                         </span>
@@ -253,6 +255,7 @@ export default function HistoryPage() {
                       }}
                       disabled={deletingId === analysis.id}
                       className="ml-2 p-2 text-slate-400 hover:text-red-600 disabled:opacity-50"
+                      data-testid="delete-button"
                     >
                       {deletingId === analysis.id ? (
                         <div className="w-4 h-4 border-2 border-current rounded-full animate-spin border-t-transparent" />
@@ -275,7 +278,7 @@ export default function HistoryPage() {
             {/* Analysis Detail */}
             <div className="lg:sticky lg:top-8">
               {selectedAnalysis ? (
-                <div className="bg-white rounded-xl border border-slate-200 p-6">
+                <div className="bg-white rounded-xl border border-slate-200 p-6" data-testid="detail-panel">
                   <h3 className="text-lg font-semibold text-slate-900 mb-4">Analysis Details</h3>
 
                   <div className="mb-6">

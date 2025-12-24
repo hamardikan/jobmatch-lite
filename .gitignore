@@ -34,6 +34,11 @@ yarn-error.log*
 coverage/
 .nyc_output/
 
+# E2E Testing
+e2e/.auth/
+e2e/playwright-report/
+e2e/test-results/
+
 # Misc
 *.tsbuildinfo
 .vercel

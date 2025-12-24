@@ -47,12 +47,12 @@ export function MatchResultCard({ result, onReset }: MatchResultCardProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="result-card">
       {/* Score Card */}
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col items-center">
-            <ScoreGauge score={result.score} size="lg" />
+            <ScoreGauge score={result.score} size="lg" data-testid="score-display" />
             <p className="mt-4 text-center text-slate-600 max-w-md">
               {result.explanation}
             </p>
@@ -77,7 +77,7 @@ export function MatchResultCard({ result, onReset }: MatchResultCardProps) {
           </CardHeader>
           <CardContent>
             {result.keyFindings.strengths.length > 0 ? (
-              <ul className="space-y-2">
+              <ul className="space-y-2" data-testid="strengths-list">
                 {result.keyFindings.strengths.map((item, i) => (
                   <li key={i} className="text-sm text-slate-600 flex items-start gap-2">
                     <span className="mt-1.5 w-1.5 h-1.5 bg-green-500 rounded-full shrink-0" />
@@ -103,7 +103,7 @@ export function MatchResultCard({ result, onReset }: MatchResultCardProps) {
           </CardHeader>
           <CardContent>
             {result.keyFindings.gaps.length > 0 ? (
-              <ul className="space-y-2">
+              <ul className="space-y-2" data-testid="gaps-list">
                 {result.keyFindings.gaps.map((item, i) => (
                   <li key={i} className="text-sm text-slate-600 flex items-start gap-2">
                     <span className="mt-1.5 w-1.5 h-1.5 bg-red-500 rounded-full shrink-0" />
@@ -129,7 +129,7 @@ export function MatchResultCard({ result, onReset }: MatchResultCardProps) {
           </CardHeader>
           <CardContent>
             {result.keyFindings.suggestions.length > 0 ? (
-              <ul className="space-y-2">
+              <ul className="space-y-2" data-testid="suggestions-list">
                 {result.keyFindings.suggestions.map((item, i) => (
                   <li key={i} className="text-sm text-slate-600 flex items-start gap-2">
                     <span className="mt-1.5 w-1.5 h-1.5 bg-blue-500 rounded-full shrink-0" />

@@ -91,7 +91,7 @@ export function ResumeUploader({
   }, [onFileChange]);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full" data-testid="resume-uploader">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-lg font-semibold text-slate-900">Resume</h2>
         <span className="text-sm text-slate-500">PDF or DOCX, max 5MB</span>
@@ -123,7 +123,7 @@ export function ResumeUploader({
               />
             </svg>
           </div>
-          <p className="font-medium text-slate-900 mb-1">{file.name}</p>
+          <p className="font-medium text-slate-900 mb-1" data-testid="uploaded-file-name">{file.name}</p>
           <p className="text-sm text-slate-500 mb-4">{formatFileSize(file.size)}</p>
           <button
             onClick={handleRemove}
@@ -169,7 +169,7 @@ export function ResumeUploader({
         </div>
       )}
 
-      {error && <p className="mt-2 text-sm text-red-500">{error}</p>}
+      {error && <p className="mt-2 text-sm text-red-500" data-testid="upload-error">{error}</p>}
     </div>
   );
 }

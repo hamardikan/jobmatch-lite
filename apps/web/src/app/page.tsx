@@ -122,7 +122,7 @@ export default function HomePage() {
 
             {/* Loading State */}
             {state.status === 'loading' && (
-              <div className="mt-8 flex flex-col items-center justify-center py-12">
+              <div className="mt-8 flex flex-col items-center justify-center py-12" data-testid="loading-indicator">
                 <div className="relative">
                   <div className="w-16 h-16 border-4 border-primary-200 rounded-full animate-spin border-t-primary-600" />
                 </div>
@@ -133,13 +133,14 @@ export default function HomePage() {
 
             {/* Error State */}
             {state.status === 'error' && (
-              <div className="mt-8 p-4 bg-red-50 border border-red-200 rounded-lg text-center">
+              <div className="mt-8 p-4 bg-red-50 border border-red-200 rounded-lg text-center" data-testid="error-state">
                 <p className="text-red-600">{state.error}</p>
                 <Button
                   onClick={reset}
                   variant="secondary"
                   size="sm"
                   className="mt-3"
+                  data-testid="try-again-button"
                 >
                   Try Again
                 </Button>
@@ -162,7 +163,7 @@ export default function HomePage() {
 
             {/* Helper Text */}
             {!canAnalyze && !isLoading && state.status !== 'error' && (
-              <p className="mt-4 text-center text-sm text-slate-500">
+              <p className="mt-4 text-center text-sm text-slate-500" data-testid="helper-text">
                 {!resumeFile && !isValidJobDescription
                   ? 'Upload your resume and paste the job description to get started'
                   : !resumeFile
