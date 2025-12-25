@@ -3,7 +3,7 @@ import { AnalyzeResumeUseCase } from '@/application/analyze-resume.usecase';
 import type { FileParserPort, ParsedFile } from '@/application/ports/file-parser.port';
 import type { AIAnalyzerPort, AnalysisOutput } from '@/application/ports/ai-analyzer.port';
 import { AppError } from '@/shared/errors';
-import { ErrorCode } from '@jobmatch/shared';
+import { ErrorCode } from '@/types';
 
 // Mock implementations
 class MockFileParser implements FileParserPort {
