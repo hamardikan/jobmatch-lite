@@ -3,7 +3,7 @@
  */
 
 import { Elysia, t } from 'elysia';
-import type { HealthResponse } from '@jobmatch/shared';
+import type { HealthResponse } from '../../../types';
 
 const healthResponseSchema = t.Object({
   status: t.Union([t.Literal('healthy'), t.Literal('degraded'), t.Literal('unhealthy')]),

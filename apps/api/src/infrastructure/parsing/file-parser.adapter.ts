@@ -6,9 +6,9 @@
 
 import { extractText } from 'unpdf';
 import mammoth from 'mammoth';
-import { FILE_CONSTRAINTS } from '@jobmatch/shared';
-import { AppError } from '@/shared/errors';
-import type { FileParserPort, ParsedFile } from '@/application/ports/file-parser.port';
+import { FILE_CONSTRAINTS } from '../../types';
+import { AppError } from '../../shared/errors';
+import type { FileParserPort, ParsedFile } from '../../application/ports/file-parser.port';
 
 export class FileParserAdapter implements FileParserPort {
   private readonly supportedTypes = new Set(FILE_CONSTRAINTS.ALLOWED_TYPES);

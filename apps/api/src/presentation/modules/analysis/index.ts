@@ -4,12 +4,12 @@
 
 import { Elysia } from 'elysia';
 import { AnalysisModel } from './model';
-import { AnalyzeResumeUseCase } from '@/application/analyze-resume.usecase';
-import { FileParserAdapter } from '@/infrastructure/parsing/file-parser.adapter';
-import { OpenRouterAdapter } from '@/infrastructure/ai/openrouter.adapter';
-import { analysisRepository } from '@/infrastructure/repositories/analysis.repository';
-import { getAuthSession, type AuthContext } from '@/presentation/middleware/auth';
-import { AppError } from '@/shared/errors';
+import { AnalyzeResumeUseCase } from '../../../application/analyze-resume.usecase';
+import { FileParserAdapter } from '../../../infrastructure/parsing/file-parser.adapter';
+import { OpenRouterAdapter } from '../../../infrastructure/ai/openrouter.adapter';
+import { analysisRepository } from '../../../infrastructure/repositories/analysis.repository';
+import { getAuthSession, type AuthContext } from '../../middleware/auth';
+import { AppError } from '../../../shared/errors';
 
 // Create dependencies
 const createUseCase = () => {

@@ -4,12 +4,12 @@
  * Implements AIAnalyzerPort using OpenRouter API
  */
 
-import { AppError } from '@/shared/errors';
+import { AppError } from '../../shared/errors';
 import type {
   AIAnalyzerPort,
   AnalysisInput,
   AnalysisOutput,
-} from '@/application/ports/ai-analyzer.port';
+} from '../../application/ports/ai-analyzer.port';
 
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const DEFAULT_MODEL = 'google/gemini-2.0-flash-001';

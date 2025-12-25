@@ -4,7 +4,7 @@
  * Interfaces for data persistence operations.
  */
 
-import type { Analysis, NewAnalysis } from '@/infrastructure/db/schema';
+import type { Analysis, NewAnalysis } from '../../infrastructure/db/schema';
 
 /**
  * Analysis repository port for persisting analysis history

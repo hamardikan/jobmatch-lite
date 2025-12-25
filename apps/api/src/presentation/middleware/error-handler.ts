@@ -3,8 +3,8 @@
  */
 
 import { Elysia } from 'elysia';
-import { AppError } from '@/shared/errors';
-import { ErrorCode } from '@jobmatch/shared';
+import { AppError } from '../../shared/errors';
+import { ErrorCode } from '../../types';
 
 export const errorHandler = new Elysia({ name: 'error-handler' }).onError(
   ({ code, error, set }) => {

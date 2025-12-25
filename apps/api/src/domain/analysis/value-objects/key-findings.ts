@@ -5,7 +5,7 @@
  * Immutable container for strengths, gaps, and suggestions.
  */
 
-import type { KeyFindings } from '@jobmatch/shared';
+import type { KeyFindings } from '../../../types';
 
 export interface KeyFindingsInput {
   strengths: string[];

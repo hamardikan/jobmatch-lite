@@ -6,9 +6,9 @@
 
 import { Elysia } from 'elysia';
 import { HistoryModel } from './model';
-import { analysisRepository } from '@/infrastructure/repositories/analysis.repository';
-import { AppError } from '@/shared/errors';
-import { getAuthSession, type AuthContext } from '@/presentation/middleware/auth';
+import { analysisRepository } from '../../../infrastructure/repositories/analysis.repository';
+import { AppError } from '../../../shared/errors';
+import { getAuthSession, type AuthContext } from '../../middleware/auth';
 
 export const historyModule = new Elysia({ prefix: '/api/history' })
   // Guard to require authentication

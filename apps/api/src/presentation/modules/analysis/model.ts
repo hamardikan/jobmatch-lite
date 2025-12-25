@@ -3,7 +3,7 @@
  */
 
 import { t } from 'elysia';
-import { FILE_CONSTRAINTS, JOB_DESCRIPTION_CONSTRAINTS } from '@jobmatch/shared';
+import { FILE_CONSTRAINTS, JOB_DESCRIPTION_CONSTRAINTS } from '../../../types';
 
 export namespace AnalysisModel {
   // Request schema

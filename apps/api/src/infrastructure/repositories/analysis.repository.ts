@@ -5,8 +5,8 @@
  */
 
 import { eq, desc } from 'drizzle-orm';
-import { db } from '@/infrastructure/db';
-import { analysis, type Analysis, type NewAnalysis } from '@/infrastructure/db/schema';
+import { db } from '../db';
+import { analysis, type Analysis, type NewAnalysis } from '../db/schema';
 
 export class AnalysisRepository {
   /**

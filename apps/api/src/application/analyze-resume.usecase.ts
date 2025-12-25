@@ -9,14 +9,14 @@
  * 5. Optionally save to history (if userId provided)
  */
 
-import { JOB_DESCRIPTION_CONSTRAINTS } from '@jobmatch/shared';
-import type { AnalysisResult } from '@jobmatch/shared';
-import { AppError } from '@/shared/errors';
-import type { FileParserPort } from '@/application/ports/file-parser.port';
-import type { AIAnalyzerPort } from '@/application/ports/ai-analyzer.port';
-import type { AnalysisRepositoryPort } from '@/application/ports/repository.port';
-import { MatchScore } from '@/domain/analysis/value-objects/match-score';
-import { KeyFindingsVO } from '@/domain/analysis/value-objects/key-findings';
+import { JOB_DESCRIPTION_CONSTRAINTS } from '../types';
+import type { AnalysisResult } from '../types';
+import { AppError } from '../shared/errors';
+import type { FileParserPort } from './ports/file-parser.port';
+import type { AIAnalyzerPort } from './ports/ai-analyzer.port';
+import type { AnalysisRepositoryPort } from './ports/repository.port';
+import { MatchScore } from '../domain/analysis/value-objects/match-score';
+import { KeyFindingsVO } from '../domain/analysis/value-objects/key-findings';
 
 export interface AnalyzeOptions {
   userId?: string;

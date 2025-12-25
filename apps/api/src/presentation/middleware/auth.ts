@@ -7,8 +7,8 @@
  */
 
 import { Elysia } from 'elysia';
-import { auth, type User, type Session } from '@/infrastructure/auth';
-import { db, session as sessionTable, user as userTable } from '@/infrastructure/db';
+import { auth, type User, type Session } from '../../infrastructure/auth';
+import { db, session as sessionTable, user as userTable } from '../../infrastructure/db';
 import { eq, and, gt } from 'drizzle-orm';
 
 /**

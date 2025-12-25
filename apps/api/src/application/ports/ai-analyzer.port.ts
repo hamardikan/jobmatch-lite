@@ -2,7 +2,7 @@
  * Port for AI analysis
  */
 
-import type { KeyFindings } from '@jobmatch/shared';
+import type { KeyFindings } from '../../types';
 
 export interface AnalysisInput {
   /** Resume text content */

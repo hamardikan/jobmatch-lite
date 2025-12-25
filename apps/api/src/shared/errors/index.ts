@@ -2,7 +2,7 @@
  * Application errors
  */
 
-import { ErrorCode } from '@jobmatch/shared';
+import { ErrorCode } from '../../types';
 
 export class AppError extends Error {
   constructor(
