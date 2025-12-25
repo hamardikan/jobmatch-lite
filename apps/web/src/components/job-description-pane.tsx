@@ -1,7 +1,7 @@
 'use client';
 
 import { Textarea } from '@/components/ui/textarea';
-import { JOB_DESCRIPTION_CONSTRAINTS } from '@jobmatch/shared';
+import { JOB_DESCRIPTION_CONSTRAINTS } from '@/types';
 
 interface JobDescriptionPaneProps {
   value: string;

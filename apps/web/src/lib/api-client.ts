@@ -2,7 +2,7 @@
  * API Client for JobMatch Lite Backend
  */
 
-import type { AnalysisResult, ApiResponse, GeneratePdfRequest } from '@jobmatch/shared';
+import type { AnalysisResult, ApiResponse, GeneratePdfRequest } from '@/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 

@@ -2,7 +2,7 @@
 
 import { useCallback, useState, useRef } from 'react';
 import { cn, formatFileSize } from '@/lib/utils';
-import { FILE_CONSTRAINTS } from '@jobmatch/shared';
+import { FILE_CONSTRAINTS } from '@/types';
 
 interface ResumeUploaderProps {
   file: File | null;

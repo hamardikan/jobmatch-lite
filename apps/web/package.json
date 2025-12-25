@@ -10,7 +10,6 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@jobmatch/shared": "workspace:*",
     "better-auth": "^1.4.7",
     "clsx": "^2.1.0",
     "next": "^15.1.0",

@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { JOB_DESCRIPTION_CONSTRAINTS } from '@jobmatch/shared';
+import { JOB_DESCRIPTION_CONSTRAINTS } from '@/types';
 import { JobDescriptionPane } from '@/components/job-description-pane';
 import { ResumeUploader } from '@/components/resume-uploader';
 import { MatchResultCard } from '@/components/match-result-card';

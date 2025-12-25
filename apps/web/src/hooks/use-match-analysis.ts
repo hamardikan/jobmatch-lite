@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import type { AnalysisResult } from '@jobmatch/shared';
+import type { AnalysisResult } from '@/types';
 import { analyzeResume } from '@/lib/api-client';
 
 export type AnalysisState =

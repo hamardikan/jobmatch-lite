@@ -1,6 +1,6 @@
 'use client';
 
-import type { AnalysisResult, GeneratePdfRequest } from '@jobmatch/shared';
+import type { AnalysisResult, GeneratePdfRequest } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScoreGauge } from '@/components/score-gauge';
