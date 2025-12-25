@@ -35,7 +35,8 @@ export default defineConfig({
   // Start both frontend and backend before tests
   webServer: [
     {
-      command: 'bun run --cwd apps/api dev',
+      command: 'cd apps/api && bun run dev',
+      cwd: '..',
       url: 'http://localhost:3001/api/health',
       reuseExistingServer: !process.env.CI,
       timeout: 120000,
@@ -49,7 +50,8 @@ export default defineConfig({
       },
     },
     {
-      command: 'bun run --cwd apps/web dev',
+      command: 'cd apps/web && bun run dev',
+      cwd: '..',
       url: 'http://localhost:3000',
       reuseExistingServer: !process.env.CI,
       timeout: 120000,

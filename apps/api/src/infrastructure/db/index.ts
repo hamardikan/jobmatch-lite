@@ -19,12 +19,14 @@ if (!DATABASE_URL) {
 }
 
 const isProduction = process.env.NODE_ENV === 'production';
+const isNeonUrl = DATABASE_URL?.includes('neon.tech');
 
 /**
  * Create database client based on environment
  */
 function createDbClient() {
-  if (isProduction) {
+  // Always use Neon HTTP driver when connecting to Neon
+  if (isProduction || isNeonUrl) {
     // Neon serverless (HTTP-based, best for Vercel Edge/Serverless)
     const sql = neon(DATABASE_URL!);
     return drizzleNeon(sql, { schema });

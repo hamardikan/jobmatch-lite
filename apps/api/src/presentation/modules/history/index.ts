@@ -17,7 +17,13 @@ export const historyModule = new Elysia({ prefix: '/api/history' })
       const authContext = await getAuthSession(headers);
       if (!authContext) {
         set.status = 401;
-        throw AppError.unauthorized();
+        return {
+          success: false,
+          error: {
+            code: 'UNAUTHORIZED',
+            message: 'Authentication required',
+          },
+        };
       }
     },
   })

@@ -4,7 +4,7 @@ import type { AnalysisResult, GeneratePdfRequest } from '@jobmatch/shared';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScoreGauge } from '@/components/score-gauge';
-import { generatePdfHtml } from '@/lib/api-client';
+import { downloadPdfReport } from '@/lib/api-client';
 import { useState } from 'react';
 
 interface MatchResultCardProps {
@@ -25,19 +25,18 @@ export function MatchResultCard({ result, onReset }: MatchResultCardProps) {
         analyzedAt: new Date().toISOString(),
       };
 
-      const html = await generatePdfHtml(request);
+      // Get PDF blob from server
+      const pdfBlob = await downloadPdfReport(request);
 
-      // Open in new window for printing
-      const printWindow = window.open('', '_blank');
-      if (printWindow) {
-        printWindow.document.write(html);
-        printWindow.document.close();
-        printWindow.focus();
-        // Small delay to ensure content is loaded
-        setTimeout(() => {
-          printWindow.print();
-        }, 500);
-      }
+      // Create download link and trigger download
+      const url = URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `JobMatch-Report-${Date.now()}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Failed to generate PDF:', error);
       alert('Failed to generate PDF. Please try again.');

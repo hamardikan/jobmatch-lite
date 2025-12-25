@@ -32,12 +32,10 @@ const app = new Elysia()
     message: 'JobMatch Lite API',
     version: '1.0.0',
     docs: '/swagger',
-  }))
-  .listen(process.env.PORT || 3001);
+  }));
 
-console.log(
-  `🚀 JobMatch Lite API is running at ${app.server?.hostname}:${app.server?.port}`
-);
-
-// Export for Vercel
+// Export for Vercel (Bun auto-serves when running with `bun run`)
 export default app;
+
+// Log startup message
+console.log(`🚀 JobMatch Lite API ready on port ${process.env.PORT || 3001}`);

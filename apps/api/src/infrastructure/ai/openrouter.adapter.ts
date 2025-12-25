@@ -12,7 +12,7 @@ import type {
 } from '@/application/ports/ai-analyzer.port';
 
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const DEFAULT_MODEL = 'meta-llama/llama-3.2-3b-instruct:free';
+const DEFAULT_MODEL = 'google/gemini-2.0-flash-001';
 const TIMEOUT_MS = 30000;
 
 interface OpenRouterResponse {
