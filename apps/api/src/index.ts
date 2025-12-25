@@ -6,36 +6,56 @@
 
 import { Elysia } from 'elysia';
 import { cors } from '@elysiajs/cors';
-import { healthModule } from '@/presentation/modules/health';
-import { analysisModule } from '@/presentation/modules/analysis';
-import { reportModule } from '@/presentation/modules/report';
-import { historyModule } from '@/presentation/modules/history';
-import { authMiddleware } from '@/presentation/middleware/auth';
-import { errorHandler } from '@/presentation/middleware/error-handler';
 
+// Build the base app with CORS - allow all origins for now
 const app = new Elysia()
   .use(
     cors({
-      origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+      origin: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization'],
       credentials: true,
     })
   )
-  .use(authMiddleware)
-  .use(errorHandler)
-  .use(healthModule)
-  .use(analysisModule)
-  .use(reportModule)
-  .use(historyModule)
   .get('/', () => ({
     message: 'JobMatch Lite API',
     version: '1.0.0',
-    docs: '/swagger',
   }));
 
-// Export for Vercel (Bun auto-serves when running with `bun run`)
-export default app;
+// Load modules dynamically to handle potential import issues
+try {
+  const { authMiddleware } = await import('./presentation/middleware/auth');
+  app.use(authMiddleware);
+} catch (e) {
+  console.error('Failed to load auth middleware:', e);
+}
 
-// Log startup message
-console.log(`🚀 JobMatch Lite API ready on port ${process.env.PORT || 3001}`);
+try {
+  const { errorHandler } = await import('./presentation/middleware/error-handler');
+  app.use(errorHandler);
+} catch (e) {
+  console.error('Failed to load error handler:', e);
+}
+
+try {
+  const { healthModule } = await import('./presentation/modules/health');
+  app.use(healthModule);
+} catch (e) {
+  console.error('Failed to load health module:', e);
+}
+
+try {
+  const { analysisModule } = await import('./presentation/modules/analysis');
+  app.use(analysisModule);
+} catch (e) {
+  console.error('Failed to load analysis module:', e);
+}
+
+try {
+  const { historyModule } = await import('./presentation/modules/history');
+  app.use(historyModule);
+} catch (e) {
+  console.error('Failed to load history module:', e);
+}
+
+export default app;
