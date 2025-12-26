@@ -164,6 +164,64 @@ export const authMiddleware = new Elysia({ name: 'auth' })
     return { success: true };
   })
 
+  // Social sign-in endpoint (initiates OAuth flow)
+  .post('/api/auth/sign-in/social', async ({ body, set }) => {
+    try {
+      const { provider, callbackURL } = body as { provider: string; callbackURL?: string };
+
+      if (!provider) {
+        set.status = 400;
+        return { error: 'Provider is required' };
+      }
+
+      // Get the OAuth authorization URL from Better Auth
+      const result = await auth.api.signInSocial({
+        body: {
+          provider,
+          callbackURL: callbackURL || '/dashboard',
+        },
+      });
+
+      return result;
+    } catch (error) {
+      set.status = 400;
+      return { error: error instanceof Error ? error.message : 'Social sign in failed' };
+    }
+  })
+
+  // Google OAuth callback - delegate to Better Auth handler
+  .get('/api/auth/callback/google', async ({ request, set }) => {
+    const frontendURL = process.env.FRONTEND_URL || 'https://jobmatch-web-mauve.vercel.app';
+
+    try {
+      // Use Better Auth's built-in handler for OAuth callback
+      const response = await auth.handler(request);
+
+      // Check if response is a redirect
+      if (response.status >= 300 && response.status < 400) {
+        const location = response.headers.get('location');
+        if (location) {
+          set.redirect = location;
+          return;
+        }
+      }
+
+      // Copy cookies from Better Auth response
+      const setCookieHeader = response.headers.get('set-cookie');
+      if (setCookieHeader) {
+        set.headers = { 'set-cookie': setCookieHeader };
+      }
+
+      // Default redirect to dashboard
+      set.redirect = `${frontendURL}/dashboard`;
+      return;
+    } catch (error) {
+      console.error('Google OAuth callback error:', error);
+      set.redirect = `${frontendURL}/login?error=oauth_failed`;
+      return;
+    }
+  })
+
   // Add macro for protecting routes
   .macro({
     auth: {
