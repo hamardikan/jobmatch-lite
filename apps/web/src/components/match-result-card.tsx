@@ -32,16 +32,14 @@ export function MatchResultCard({ result, onReset }: MatchResultCardProps) {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   const handleDownloadPdf = async () => {
+    if (!result.id) {
+      alert('Unable to generate PDF. Analysis ID not available.');
+      return;
+    }
+
     setIsGeneratingPdf(true);
     try {
-      const request: GeneratePdfRequest = {
-        score: result.score,
-        explanation: result.explanation,
-        keyFindings: result.keyFindings,
-        analyzedAt: new Date().toISOString(),
-      };
-
-      const pdfBlob = await downloadPdfReport(request);
+      const pdfBlob = await downloadPdfReport({ analysisId: result.id });
 
       const url = URL.createObjectURL(pdfBlob);
       const link = document.createElement('a');

@@ -23,6 +23,10 @@ export interface AnalyzeOptions {
   filename?: string;
 }
 
+export interface AnalysisResultWithId extends AnalysisResult {
+  id?: string;
+}
+
 export class AnalyzeResumeUseCase {
   constructor(
     private readonly fileParser: FileParserPort,
@@ -34,7 +38,7 @@ export class AnalyzeResumeUseCase {
     file: File,
     jobDescription: string,
     options: AnalyzeOptions = {}
-  ): Promise<AnalysisResult> {
+  ): Promise<AnalysisResultWithId> {
     const startTime = performance.now();
 
     // Validate job description
@@ -55,7 +59,7 @@ export class AnalyzeResumeUseCase {
 
     const processingTime = Math.round(performance.now() - startTime);
 
-    const result: AnalysisResult = {
+    const result: AnalysisResultWithId = {
       score: score.value,
       explanation: aiResult.explanation,
       keyFindings: keyFindings.toPlainObject(),
@@ -64,7 +68,7 @@ export class AnalyzeResumeUseCase {
 
     // Save to history if userId is provided
     if (options.userId && this.analysisRepository) {
-      await this.analysisRepository.save({
+      const saved = await this.analysisRepository.save({
         userId: options.userId,
         resumeFilename: options.filename || file.name || 'resume',
         jobDescriptionPreview: jobDescription.slice(0, 200),
@@ -73,6 +77,7 @@ export class AnalyzeResumeUseCase {
         keyFindings: result.keyFindings,
         processingTime: result.processingTime,
       });
+      result.id = saved.id;
     }
 
     return result;

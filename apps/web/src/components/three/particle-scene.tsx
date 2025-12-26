@@ -158,7 +158,7 @@ export function ParticleScene() {
   const secondaryCount = isMobile ? 200 : 800;
 
   return (
-    <div className="absolute inset-0 -z-10">
+    <div className="absolute inset-0 z-0">
       <Canvas
         camera={{ position: [0, 0, 8], fov: 60 }}
         dpr={[1, isMobile ? 1.5 : 2]}

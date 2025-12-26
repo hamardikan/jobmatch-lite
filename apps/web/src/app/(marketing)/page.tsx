@@ -53,10 +53,10 @@ export default function LandingPage() {
       <section className="relative pt-32 pb-20 lg:pt-40 lg:pb-32 overflow-hidden">
         {/* Three.js Particle Background */}
         <ParticleScene />
-        {/* Gradient overlay for content readability */}
-        <div className="absolute inset-0 -z-5 bg-gradient-to-b from-background/30 via-background/60 to-background pointer-events-none" />
+        {/* Gradient overlay for content readability - above particles, below content */}
+        <div className="absolute inset-0 z-[1] bg-gradient-to-b from-transparent via-background/40 to-background pointer-events-none" />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="relative z-[2] max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-4xl mx-auto">
             {/* Badge */}
             <motion.div

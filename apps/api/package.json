@@ -18,14 +18,16 @@
   "dependencies": {
     "@elysiajs/cors": "^1.1.0",
     "@neondatabase/serverless": "^1.0.2",
+    "@sparticuz/chromium": "^143.0.0",
     "better-auth": "^1.4.7",
     "drizzle-orm": "^0.45.1",
     "elysia": "^1.2.0",
     "mammoth": "^1.8.0",
     "postgres": "^3.4.7",
+    "puppeteer-core": "^24.34.0",
     "unpdf": "^0.12.0"
   },
-    "devDependencies": {
+  "devDependencies": {
     "@testcontainers/postgresql": "^11.10.0",
     "@types/bun": "latest",
     "dotenv": "^17.2.3",

@@ -100,4 +100,8 @@ export class AppError extends Error {
   static notFound(message = 'Resource not found'): AppError {
     return new AppError(ErrorCode.NOT_FOUND, message, 404);
   }
+
+  static badRequest(message: string, details?: Record<string, unknown>): AppError {
+    return new AppError(ErrorCode.VALIDATION_ERROR, message, 400, details);
+  }
 }

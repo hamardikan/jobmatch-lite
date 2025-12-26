@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useSession, signOut } from '@/lib/auth-client';
 import { useRouter } from 'next/navigation';
@@ -8,14 +8,17 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input, Label } from '@/components/ui/input';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { updateUserProfile, changePassword } from '@/lib/api-client';
 import {
   User,
   Bell,
   Shield,
-  Moon,
   LogOut,
   Trash2,
   Download,
+  Check,
+  AlertCircle,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -26,6 +29,28 @@ export default function SettingsPage() {
   const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState<Tab>('profile');
 
+  // Profile state
+  const [name, setName] = useState('');
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [profileSuccess, setProfileSuccess] = useState(false);
+  const [profileError, setProfileError] = useState('');
+
+  // Password state
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+
+  // Initialize name from session
+  useEffect(() => {
+    if (session?.user?.name) {
+      setName(session.user.name);
+    }
+  }, [session?.user?.name]);
+
   const tabs = [
     { id: 'profile' as const, label: 'Profile', icon: User },
     { id: 'notifications' as const, label: 'Notifications', icon: Bell },
@@ -35,6 +60,65 @@ export default function SettingsPage() {
   const handleSignOut = async () => {
     await signOut();
     router.push('/');
+  };
+
+  const handleSaveProfile = async () => {
+    if (!name.trim()) {
+      setProfileError('Name is required');
+      return;
+    }
+
+    setIsSavingProfile(true);
+    setProfileError('');
+    setProfileSuccess(false);
+
+    try {
+      await updateUserProfile(name.trim());
+      setProfileSuccess(true);
+      setTimeout(() => setProfileSuccess(false), 3000);
+    } catch (error) {
+      setProfileError(error instanceof Error ? error.message : 'Failed to update profile');
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    // Validation
+    if (!currentPassword) {
+      setPasswordError('Current password is required');
+      return;
+    }
+    if (!newPassword) {
+      setPasswordError('New password is required');
+      return;
+    }
+    if (newPassword.length < 8) {
+      setPasswordError('New password must be at least 8 characters');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Passwords do not match');
+      return;
+    }
+
+    setIsChangingPassword(true);
+    setPasswordError('');
+    setPasswordSuccess(false);
+
+    try {
+      await changePassword(currentPassword, newPassword);
+      setPasswordSuccess(true);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setShowPasswordForm(false);
+      setTimeout(() => setPasswordSuccess(false), 3000);
+    } catch (error) {
+      setPasswordError(error instanceof Error ? error.message : 'Failed to change password');
+    } finally {
+      setIsChangingPassword(false);
+    }
   };
 
   return (
@@ -98,14 +182,14 @@ export default function SettingsPage() {
                 {/* Avatar */}
                 <div className="flex items-center gap-4">
                   <div className="w-20 h-20 rounded-full bg-primary-100 dark:bg-primary-800 flex items-center justify-center text-2xl font-bold text-primary-600 dark:text-primary-300">
-                    {session?.user?.name?.[0]?.toUpperCase() || 'U'}
+                    {name?.[0]?.toUpperCase() || session?.user?.name?.[0]?.toUpperCase() || 'U'}
                   </div>
                   <div>
-                    <Button variant="secondary" size="sm">
-                      Change Photo
-                    </Button>
-                    <p className="text-xs text-foreground-muted mt-1">
-                      JPG or PNG. Max 1MB.
+                    <p className="text-sm font-medium text-foreground">
+                      {name || session?.user?.name || 'User'}
+                    </p>
+                    <p className="text-xs text-foreground-muted mt-0.5">
+                      {session?.user?.email}
                     </p>
                   </div>
                 </div>
@@ -115,7 +199,8 @@ export default function SettingsPage() {
                   <Label htmlFor="name">Full Name</Label>
                   <Input
                     id="name"
-                    defaultValue={session?.user?.name || ''}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                     placeholder="Your name"
                   />
                 </div>
@@ -126,7 +211,7 @@ export default function SettingsPage() {
                   <Input
                     id="email"
                     type="email"
-                    defaultValue={session?.user?.email || ''}
+                    value={session?.user?.email || ''}
                     disabled
                   />
                   <p className="text-xs text-foreground-muted">
@@ -134,7 +219,30 @@ export default function SettingsPage() {
                   </p>
                 </div>
 
-                <Button>Save Changes</Button>
+                {/* Messages */}
+                {profileError && (
+                  <div className="flex items-center gap-2 text-danger-600 dark:text-danger-500 text-sm">
+                    <AlertCircle className="w-4 h-4" />
+                    {profileError}
+                  </div>
+                )}
+                {profileSuccess && (
+                  <div className="flex items-center gap-2 text-success-600 dark:text-success-500 text-sm">
+                    <Check className="w-4 h-4" />
+                    Profile updated successfully
+                  </div>
+                )}
+
+                <Button onClick={handleSaveProfile} disabled={isSavingProfile}>
+                  {isSavingProfile ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    'Save Changes'
+                  )}
+                </Button>
               </CardContent>
             </Card>
           )}
@@ -183,8 +291,6 @@ export default function SettingsPage() {
                   </div>
                   <ThemeToggle />
                 </div>
-
-                <Button>Save Preferences</Button>
               </CardContent>
             </Card>
           )}
@@ -199,9 +305,82 @@ export default function SettingsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <Button variant="secondary">
-                    Change Password
-                  </Button>
+                  {!showPasswordForm ? (
+                    <Button variant="secondary" onClick={() => setShowPasswordForm(true)}>
+                      Change Password
+                    </Button>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="currentPassword">Current Password</Label>
+                        <Input
+                          id="currentPassword"
+                          type="password"
+                          value={currentPassword}
+                          onChange={(e) => setCurrentPassword(e.target.value)}
+                          placeholder="Enter current password"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="newPassword">New Password</Label>
+                        <Input
+                          id="newPassword"
+                          type="password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          placeholder="Enter new password (min 8 characters)"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                        <Input
+                          id="confirmPassword"
+                          type="password"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          placeholder="Confirm new password"
+                        />
+                      </div>
+
+                      {passwordError && (
+                        <div className="flex items-center gap-2 text-danger-600 dark:text-danger-500 text-sm">
+                          <AlertCircle className="w-4 h-4" />
+                          {passwordError}
+                        </div>
+                      )}
+                      {passwordSuccess && (
+                        <div className="flex items-center gap-2 text-success-600 dark:text-success-500 text-sm">
+                          <Check className="w-4 h-4" />
+                          Password changed successfully
+                        </div>
+                      )}
+
+                      <div className="flex gap-2">
+                        <Button onClick={handleChangePassword} disabled={isChangingPassword}>
+                          {isChangingPassword ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Changing...
+                            </>
+                          ) : (
+                            'Change Password'
+                          )}
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          onClick={() => {
+                            setShowPasswordForm(false);
+                            setCurrentPassword('');
+                            setNewPassword('');
+                            setConfirmPassword('');
+                            setPasswordError('');
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 

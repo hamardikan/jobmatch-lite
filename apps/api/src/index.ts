@@ -58,4 +58,18 @@ try {
   console.error('Failed to load history module:', e);
 }
 
+try {
+  const { reportModule } = await import('./presentation/modules/report');
+  app.use(reportModule);
+} catch (e) {
+  console.error('Failed to load report module:', e);
+}
+
+try {
+  const { userModule } = await import('./presentation/modules/user');
+  app.use(userModule);
+} catch (e) {
+  console.error('Failed to load user module:', e);
+}
+
 export default app;

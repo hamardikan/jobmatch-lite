@@ -2,7 +2,25 @@
  * API Client for JobMatch Lite Backend
  */
 
-import type { AnalysisResult, ApiResponse, GeneratePdfRequest } from '@/types';
+import type { AnalysisResult, ApiResponse, GeneratePdfRequest, KeyFindings } from '@/types';
+
+export interface HistoryItem {
+  id: string;
+  resumeFilename: string;
+  jobDescriptionPreview: string;
+  score: number;
+  explanation: string;
+  keyFindings: KeyFindings;
+  processingTime: number;
+  createdAt: string;
+}
+
+export interface HistoryResponse {
+  items: HistoryItem[];
+  total: number;
+  limit: number;
+  offset: number;
+}
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -86,4 +104,97 @@ export async function checkHealth(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/**
+ * Get user profile
+ */
+export async function getUserProfile(): Promise<{ id: string; name: string; email: string }> {
+  const response = await fetch(`${API_BASE_URL}/api/user/profile`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+
+  if (response.status === 401) {
+    throw new Error('Authentication required');
+  }
+
+  const data = await response.json();
+  if (!data.success) {
+    throw new Error(data.error?.message || 'Failed to get profile');
+  }
+
+  return data.data;
+}
+
+/**
+ * Update user profile
+ */
+export async function updateUserProfile(name: string): Promise<{ id: string; name: string; email: string }> {
+  const response = await fetch(`${API_BASE_URL}/api/user/profile`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ name }),
+    credentials: 'include',
+  });
+
+  if (response.status === 401) {
+    throw new Error('Authentication required');
+  }
+
+  const data = await response.json();
+  if (!data.success) {
+    throw new Error(data.error?.message || 'Failed to update profile');
+  }
+
+  return data.data;
+}
+
+/**
+ * Change password
+ */
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/user/password`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ currentPassword, newPassword }),
+    credentials: 'include',
+  });
+
+  if (response.status === 401) {
+    throw new Error('Authentication required');
+  }
+
+  const data = await response.json();
+  if (!data.success) {
+    throw new Error(data.error?.message || 'Failed to change password');
+  }
+}
+
+/**
+ * Get analysis history
+ */
+export async function getHistory(limit = 50, offset = 0): Promise<HistoryResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/history?limit=${limit}&offset=${offset}`,
+    {
+      method: 'GET',
+      credentials: 'include',
+    }
+  );
+
+  if (response.status === 401) {
+    throw new Error('Authentication required');
+  }
+
+  const data = await response.json();
+  if (!data.success) {
+    throw new Error(data.error?.message || 'Failed to get history');
+  }
+
+  return data.data;
 }

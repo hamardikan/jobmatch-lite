@@ -27,6 +27,7 @@ export namespace AnalysisModel {
 
   // Analysis result schema
   export const analysisResult = t.Object({
+    id: t.Optional(t.String()),
     score: t.Number({ minimum: 0, maximum: 100 }),
     explanation: t.String(),
     keyFindings: keyFindings,

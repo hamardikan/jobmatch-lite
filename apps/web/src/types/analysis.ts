@@ -12,6 +12,8 @@ export interface KeyFindings {
 }
 
 export interface AnalysisResult {
+  /** Analysis ID (from database) */
+  id?: string;
   /** Match score from 0-100 */
   score: number;
   /** Detailed explanation of the match analysis */
@@ -23,18 +25,6 @@ export interface AnalysisResult {
 }
 
 export interface GeneratePdfRequest {
-  /** Match score from the analysis (0-100) */
-  score: number;
-  /** Detailed explanation from the analysis */
-  explanation: string;
-  /** Key findings from the analysis */
-  keyFindings: KeyFindings;
-  /** Job title being applied for (optional) */
-  jobTitle?: string;
-  /** Company name (optional) */
-  companyName?: string;
-  /** Candidate's name for the report (optional) */
-  candidateName?: string;
-  /** When the analysis was performed */
-  analyzedAt?: string;
+  /** Analysis ID to generate PDF for */
+  analysisId: string;
 }
