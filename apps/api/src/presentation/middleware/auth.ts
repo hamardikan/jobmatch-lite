@@ -178,22 +178,6 @@ export const authMiddleware = new Elysia({ name: 'auth' })
     }
   })
 
-  // Social sign-in via GET redirect - for cross-origin OAuth (browser navigation)
-  // This is the preferred method for cross-origin setups because cookies persist
-  .get('/api/auth/sign-in/social', async ({ request }) => {
-    const frontendURL = process.env.FRONTEND_URL || 'https://jobmatch-web-mauve.vercel.app';
-    try {
-      // Delegate to Better Auth's handler which sets state cookies and redirects to OAuth provider
-      return auth.handler(request);
-    } catch (error) {
-      console.error('Social sign-in redirect error:', error);
-      return new Response(null, {
-        status: 302,
-        headers: { 'Location': `${frontendURL}/login?error=oauth_init_failed` },
-      });
-    }
-  })
-
   // Google OAuth callback - delegate to Better Auth handler
   .get('/api/auth/callback/google', async ({ request }) => {
     const frontendURL = process.env.FRONTEND_URL || 'https://jobmatch-web-mauve.vercel.app';

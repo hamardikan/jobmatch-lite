@@ -61,6 +61,19 @@ export const auth = betterAuth({
       trustedProviders: ['google', 'credential'],
     },
   },
+
+  // Cross-origin cookie settings (REQUIRED for separate frontend/backend domains)
+  advanced: {
+    crossSubDomainCookies: {
+      enabled: true,
+    },
+    defaultCookieAttributes: {
+      sameSite: 'none' as const,
+      secure: true,
+      httpOnly: true,
+      path: '/',
+    },
+  },
 });
 
 // Export auth types for use in middleware
