@@ -4,6 +4,8 @@
 
 import type { AnalysisResult, ApiResponse, GeneratePdfRequest, KeyFindings } from '@/types';
 
+export type ApplicationStatus = 'saved' | 'applied' | 'interviewing' | 'rejected' | 'offer';
+
 export interface HistoryItem {
   id: string;
   resumeFilename: string;
@@ -13,6 +15,14 @@ export interface HistoryItem {
   keyFindings: KeyFindings;
   processingTime: number;
   createdAt: string;
+  // Job tracker fields
+  jobTitle: string | null;
+  companyName: string | null;
+  location: string | null;
+  applicationStatus: ApplicationStatus;
+  dateApplied: string | null;
+  followUpDate: string | null;
+  updatedAt: string | null;
 }
 
 export interface HistoryResponse {
@@ -20,6 +30,13 @@ export interface HistoryResponse {
   total: number;
   limit: number;
   offset: number;
+}
+
+export interface SearchHistoryOptions {
+  q?: string;
+  status?: ApplicationStatus;
+  limit?: number;
+  offset?: number;
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -176,11 +193,18 @@ export async function changePassword(currentPassword: string, newPassword: strin
 }
 
 /**
- * Get analysis history
+ * Get analysis history with search and filters
  */
-export async function getHistory(limit = 50, offset = 0): Promise<HistoryResponse> {
+export async function getHistory(options: SearchHistoryOptions = {}): Promise<HistoryResponse> {
+  const { q, status, limit = 50, offset = 0 } = options;
+  const params = new URLSearchParams();
+  params.set('limit', String(limit));
+  params.set('offset', String(offset));
+  if (q) params.set('q', q);
+  if (status) params.set('status', status);
+
   const response = await fetch(
-    `${API_BASE_URL}/api/history?limit=${limit}&offset=${offset}`,
+    `${API_BASE_URL}/api/history?${params.toString()}`,
     {
       method: 'GET',
       credentials: 'include',
@@ -194,6 +218,64 @@ export async function getHistory(limit = 50, offset = 0): Promise<HistoryRespons
   const data = await response.json();
   if (!data.success) {
     throw new Error(data.error?.message || 'Failed to get history');
+  }
+
+  return data.data;
+}
+
+/**
+ * Update application status
+ */
+export async function updateApplicationStatus(
+  id: string,
+  status: ApplicationStatus,
+  followUpDate?: string | null
+): Promise<HistoryItem> {
+  const response = await fetch(`${API_BASE_URL}/api/history/${id}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ status, followUpDate }),
+    credentials: 'include',
+  });
+
+  if (response.status === 401) {
+    throw new Error('Authentication required');
+  }
+
+  if (response.status === 404) {
+    throw new Error('Analysis not found');
+  }
+
+  const data = await response.json();
+  if (!data.success) {
+    throw new Error(data.error?.message || 'Failed to update status');
+  }
+
+  return data.data;
+}
+
+/**
+ * Get single analysis by ID
+ */
+export async function getAnalysisById(id: string): Promise<HistoryItem> {
+  const response = await fetch(`${API_BASE_URL}/api/history/${id}`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+
+  if (response.status === 401) {
+    throw new Error('Authentication required');
+  }
+
+  if (response.status === 404) {
+    throw new Error('Analysis not found');
+  }
+
+  const data = await response.json();
+  if (!data.success) {
+    throw new Error(data.error?.message || 'Failed to get analysis');
   }
 
   return data.data;

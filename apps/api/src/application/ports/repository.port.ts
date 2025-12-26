@@ -6,6 +6,21 @@
 
 import type { Analysis, NewAnalysis } from '../../infrastructure/db/schema';
 
+export type ApplicationStatus = 'saved' | 'applied' | 'interviewing' | 'rejected' | 'offer';
+
+export interface SearchOptions {
+  q?: string;
+  status?: ApplicationStatus;
+  limit?: number;
+  offset?: number;
+}
+
+export interface UpdateStatusData {
+  applicationStatus: ApplicationStatus;
+  dateApplied?: Date | null;
+  followUpDate?: Date | null;
+}
+
 /**
  * Analysis repository port for persisting analysis history
  */
@@ -24,6 +39,11 @@ export interface AnalysisRepositoryPort {
   ): Promise<Analysis[]>;
 
   /**
+   * Search analyses for a user with filters
+   */
+  searchByUserId(userId: string, options?: SearchOptions): Promise<Analysis[]>;
+
+  /**
    * Find a single analysis by ID
    */
   findById(id: string): Promise<Analysis | undefined>;
@@ -34,6 +54,15 @@ export interface AnalysisRepositoryPort {
   findByIdAndUserId(id: string, userId: string): Promise<Analysis | undefined>;
 
   /**
+   * Update an analysis by ID for a specific user
+   */
+  updateByIdAndUserId(
+    id: string,
+    userId: string,
+    data: UpdateStatusData
+  ): Promise<Analysis | undefined>;
+
+  /**
    * Delete an analysis by ID (with ownership check)
    */
   deleteByIdAndUserId(id: string, userId: string): Promise<boolean>;
@@ -42,4 +71,9 @@ export interface AnalysisRepositoryPort {
    * Count total analyses for a user
    */
   countByUserId(userId: string): Promise<number>;
+
+  /**
+   * Count analyses for a user with optional filters
+   */
+  countByUserIdWithFilters(userId: string, options?: SearchOptions): Promise<number>;
 }

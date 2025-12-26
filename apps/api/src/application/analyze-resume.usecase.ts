@@ -76,6 +76,12 @@ export class AnalyzeResumeUseCase {
         explanation: result.explanation,
         keyFindings: result.keyFindings,
         processingTime: result.processingTime,
+        // Job application tracker fields
+        jobTitle: aiResult.jobDetails.jobTitle,
+        companyName: aiResult.jobDetails.companyName,
+        location: aiResult.jobDetails.location,
+        fullJobDescription: jobDescription,
+        applicationStatus: 'saved',
       });
       result.id = saved.id;
     }

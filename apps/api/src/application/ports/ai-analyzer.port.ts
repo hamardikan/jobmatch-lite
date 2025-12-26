@@ -11,6 +11,15 @@ export interface AnalysisInput {
   jobDescription: string;
 }
 
+export interface JobDetails {
+  /** Extracted job title */
+  jobTitle: string | null;
+  /** Extracted company name */
+  companyName: string | null;
+  /** Extracted work location */
+  location: string | null;
+}
+
 export interface AnalysisOutput {
   /** Match score 0-100 */
   score: number;
@@ -18,6 +27,8 @@ export interface AnalysisOutput {
   explanation: string;
   /** Key findings */
   keyFindings: KeyFindings;
+  /** Extracted job details */
+  jobDetails: JobDetails;
 }
 
 export interface AIAnalyzerPort {

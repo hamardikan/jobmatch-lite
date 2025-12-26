@@ -66,3 +66,30 @@ export function ScoreBadge({ score, size = 'md', showLabel = true, className }: 
     </Badge>
   );
 }
+
+// Application status badge
+export type ApplicationStatus = 'saved' | 'applied' | 'interviewing' | 'rejected' | 'offer';
+
+interface StatusBadgeProps {
+  status: ApplicationStatus;
+  size?: 'sm' | 'md' | 'lg';
+  className?: string;
+}
+
+const statusConfig: Record<ApplicationStatus, { label: string; variant: BadgeProps['variant'] }> = {
+  saved: { label: 'Saved', variant: 'default' },
+  applied: { label: 'Applied', variant: 'info' },
+  interviewing: { label: 'Interviewing', variant: 'warning' },
+  rejected: { label: 'Rejected', variant: 'danger' },
+  offer: { label: 'Offer', variant: 'success' },
+};
+
+export function StatusBadge({ status, size = 'sm', className }: StatusBadgeProps) {
+  const config = statusConfig[status] || statusConfig.saved;
+
+  return (
+    <Badge variant={config.variant} size={size} className={className}>
+      {config.label}
+    </Badge>
+  );
+}

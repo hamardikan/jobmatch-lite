@@ -31,6 +31,11 @@ interface AIAnalysisResponse {
     gaps: string[];
     suggestions: string[];
   };
+  jobDetails: {
+    jobTitle: string | null;
+    companyName: string | null;
+    location: string | null;
+  };
 }
 
 export class OpenRouterAdapter implements AIAnalyzerPort {
@@ -78,6 +83,11 @@ Respond ONLY with a valid JSON object (no markdown, no explanation) in this exac
     "strengths": ["<strength 1>", "<strength 2>", ...],
     "gaps": ["<gap 1>", "<gap 2>", ...],
     "suggestions": ["<suggestion 1>", "<suggestion 2>", ...]
+  },
+  "jobDetails": {
+    "jobTitle": "<extracted job title or null if not found>",
+    "companyName": "<extracted company name or null if not found>",
+    "location": "<extracted work location or null if not found>"
   }
 }
 
@@ -85,7 +95,13 @@ Score guidelines:
 - 0-39: Poor match, major gaps in required skills
 - 40-59: Fair match, some relevant experience but significant gaps
 - 60-79: Good match, meets most requirements
-- 80-100: Excellent match, strong alignment with requirements`;
+- 80-100: Excellent match, strong alignment with requirements
+
+Job Details extraction:
+- Extract the exact job title/position name from the job description
+- Extract the company or organization name
+- Extract work location (city, remote, hybrid, etc.) if mentioned
+- Use null for any field that cannot be determined`;
   }
 
   private async callOpenRouter(prompt: string): Promise<OpenRouterResponse> {
@@ -176,6 +192,9 @@ Score guidelines:
     // Clamp score to valid range
     const score = Math.max(0, Math.min(100, Math.round(parsed.score)));
 
+    // Extract job details with fallbacks
+    const jobDetails = parsed.jobDetails || {};
+
     return {
       score,
       explanation: parsed.explanation,
@@ -183,6 +202,11 @@ Score guidelines:
         strengths: parsed.keyFindings.strengths.filter((s) => typeof s === 'string'),
         gaps: parsed.keyFindings.gaps.filter((s) => typeof s === 'string'),
         suggestions: parsed.keyFindings.suggestions.filter((s) => typeof s === 'string'),
+      },
+      jobDetails: {
+        jobTitle: typeof jobDetails.jobTitle === 'string' ? jobDetails.jobTitle : null,
+        companyName: typeof jobDetails.companyName === 'string' ? jobDetails.companyName : null,
+        location: typeof jobDetails.location === 'string' ? jobDetails.location : null,
       },
     };
   }

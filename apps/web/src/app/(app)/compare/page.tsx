@@ -41,7 +41,7 @@ export default function ComparePage() {
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const data = await getHistory(50, 0);
+        const data = await getHistory({ limit: 50 });
         setHistory(data.items);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load history');

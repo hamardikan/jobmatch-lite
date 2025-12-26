@@ -73,7 +73,7 @@ export const verification = pgTable('verification', {
 // ============================================
 
 /**
- * Analysis history - stores user's past resume analyses
+ * Analysis history - stores user's past resume analyses and job applications
  */
 export const analysis = pgTable('analysis', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -91,6 +91,18 @@ export const analysis = pgTable('analysis', {
   }>(),
   processingTime: integer('processing_time').notNull(), // milliseconds
   createdAt: timestamp('created_at').notNull().defaultNow(),
+
+  // Job Application Tracker fields (AI-extracted or user-managed)
+  jobTitle: text('job_title'),                           // AI-extracted from JD
+  companyName: text('company_name'),                     // AI-extracted from JD
+  location: text('location'),                            // AI-extracted from JD
+  fullJobDescription: text('full_job_description'),      // Full JD for search
+  applicationStatus: text('application_status')
+    .notNull()
+    .default('saved'),                                   // saved|applied|interviewing|rejected|offer
+  dateApplied: timestamp('date_applied'),                // When marked "applied"
+  followUpDate: timestamp('follow_up_date'),             // Reminder date
+  updatedAt: timestamp('updated_at').defaultNow(),       // Last update
 });
 
 // ============================================

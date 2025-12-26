@@ -4,10 +4,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { LinkButton } from '@/components/ui/link-button';
 import { Input } from '@/components/ui/input';
-import { ScoreBadge } from '@/components/ui/badge';
+import { ScoreBadge, StatusBadge } from '@/components/ui/badge';
+import type { ApplicationStatus } from '@/components/ui/badge';
+import { StatusSelector } from '@/components/status-selector';
 import { ScoreGauge } from '@/components/score-gauge';
 import {
   Search,
@@ -19,23 +20,27 @@ import {
   CheckCircle,
   XCircle,
   Lightbulb,
+  Building2,
+  MapPin,
+  Calendar,
+  Briefcase,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  getHistory,
+  updateApplicationStatus,
+  type HistoryItem,
+  type ApplicationStatus as ApiApplicationStatus,
+} from '@/lib/api-client';
 
-interface AnalysisItem {
-  id: string;
-  resumeFilename: string;
-  jobDescriptionPreview: string;
-  score: number;
-  explanation: string;
-  keyFindings: {
-    strengths: string[];
-    gaps: string[];
-    suggestions: string[];
-  };
-  processingTime: number;
-  createdAt: string;
-}
+const statusTabs: { value: ApiApplicationStatus | 'all'; label: string }[] = [
+  { value: 'all', label: 'All' },
+  { value: 'saved', label: 'Saved' },
+  { value: 'applied', label: 'Applied' },
+  { value: 'interviewing', label: 'Interviewing' },
+  { value: 'rejected', label: 'Rejected' },
+  { value: 'offer', label: 'Offer' },
+];
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 20 },
@@ -44,58 +49,66 @@ const fadeInUp = {
 
 export default function HistoryPage() {
   const router = useRouter();
-  const [analyses, setAnalyses] = useState<AnalysisItem[]>([]);
-  const [filteredAnalyses, setFilteredAnalyses] = useState<AnalysisItem[]>([]);
+  const [analyses, setAnalyses] = useState<HistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedAnalysis, setSelectedAnalysis] = useState<AnalysisItem | null>(null);
+  const [selectedAnalysis, setSelectedAnalysis] = useState<HistoryItem | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<ApiApplicationStatus | 'all'>('all');
+  const [total, setTotal] = useState(0);
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const fetchHistory = useCallback(async () => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    setIsLoading(true);
     try {
-      const response = await fetch(`${apiUrl}/api/history`, {
-        credentials: 'include',
+      const result = await getHistory({
+        q: debouncedQuery || undefined,
+        status: statusFilter === 'all' ? undefined : statusFilter,
       });
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          router.push('/login');
-          return;
-        }
-        throw new Error('Failed to fetch history');
-      }
-
-      const data = await response.json();
-      const items = data.data?.items || data.data || [];
-      setAnalyses(items);
-      setFilteredAnalyses(items);
+      setAnalyses(result.items);
+      setTotal(result.total);
+      setError(null);
     } catch (err) {
+      if (err instanceof Error && err.message === 'Authentication required') {
+        router.push('/login');
+        return;
+      }
       setError(err instanceof Error ? err.message : 'Failed to load history');
     } finally {
       setIsLoading(false);
     }
-  }, [router]);
+  }, [debouncedQuery, statusFilter, router]);
 
   useEffect(() => {
     fetchHistory();
   }, [fetchHistory]);
 
-  useEffect(() => {
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      setFilteredAnalyses(
-        analyses.filter(
-          (a) =>
-            a.jobDescriptionPreview.toLowerCase().includes(query) ||
-            a.resumeFilename.toLowerCase().includes(query)
-        )
+  const handleStatusChange = async (id: string, newStatus: ApplicationStatus) => {
+    setUpdatingId(id);
+    try {
+      const updated = await updateApplicationStatus(id, newStatus as ApiApplicationStatus);
+      setAnalyses((prev) =>
+        prev.map((a) => (a.id === id ? updated : a))
       );
-    } else {
-      setFilteredAnalyses(analyses);
+      if (selectedAnalysis?.id === id) {
+        setSelectedAnalysis(updated);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update status');
+    } finally {
+      setUpdatingId(null);
     }
-  }, [searchQuery, analyses]);
+  };
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this analysis?')) return;
@@ -113,7 +126,7 @@ export default function HistoryPage() {
         throw new Error('Failed to delete analysis');
       }
 
-      setAnalyses(analyses.filter((a) => a.id !== id));
+      setAnalyses((prev) => prev.filter((a) => a.id !== id));
       if (selectedAnalysis?.id === id) {
         setSelectedAnalysis(null);
       }
@@ -124,7 +137,15 @@ export default function HistoryPage() {
     }
   };
 
-  if (isLoading) {
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  if (isLoading && analyses.length === 0) {
     return (
       <div className="p-6 lg:p-8 flex items-center justify-center min-h-[60vh]">
         <div className="flex flex-col items-center gap-4">
@@ -141,14 +162,14 @@ export default function HistoryPage() {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8"
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6"
       >
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-            Analysis History
+            Job Applications
           </h1>
           <p className="text-foreground-secondary mt-1">
-            {analyses.length} {analyses.length === 1 ? 'analysis' : 'analyses'} saved
+            {total} {total === 1 ? 'application' : 'applications'} tracked
           </p>
         </div>
         <LinkButton href="/analyze" size="md">
@@ -157,20 +178,39 @@ export default function HistoryPage() {
         </LinkButton>
       </motion.div>
 
-      {/* Search */}
+      {/* Search and Filters */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="mb-6"
+        className="space-y-4 mb-6"
       >
+        {/* Search */}
         <Input
-          placeholder="Search by job description or filename..."
+          placeholder="Search by job title, company, or resume..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           leftIcon={<Search className="w-5 h-5" />}
           className="max-w-md"
         />
+
+        {/* Status Filter Tabs */}
+        <div className="flex flex-wrap gap-2">
+          {statusTabs.map((tab) => (
+            <button
+              key={tab.value}
+              onClick={() => setStatusFilter(tab.value)}
+              className={cn(
+                'px-4 py-2 text-sm font-medium rounded-lg transition-colors',
+                statusFilter === tab.value
+                  ? 'bg-primary-600 text-white'
+                  : 'bg-background-secondary text-foreground-secondary hover:text-foreground'
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </motion.div>
 
       {error && (
@@ -183,7 +223,7 @@ export default function HistoryPage() {
         </motion.div>
       )}
 
-      {filteredAnalyses.length === 0 ? (
+      {analyses.length === 0 ? (
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -194,14 +234,14 @@ export default function HistoryPage() {
                 <FileText className="w-10 h-10 text-foreground-muted" />
               </div>
               <h3 className="text-xl font-semibold text-foreground mb-2">
-                {searchQuery ? 'No results found' : 'No analyses yet'}
+                {searchQuery || statusFilter !== 'all' ? 'No results found' : 'No applications yet'}
               </h3>
               <p className="text-foreground-secondary mb-6 max-w-sm mx-auto">
-                {searchQuery
-                  ? 'Try adjusting your search terms'
-                  : 'Start by uploading your resume and a job description to see how well they match.'}
+                {searchQuery || statusFilter !== 'all'
+                  ? 'Try adjusting your search or filters'
+                  : 'Start by uploading your resume and a job description to track your applications.'}
               </p>
-              {!searchQuery && (
+              {!searchQuery && statusFilter === 'all' && (
                 <LinkButton href="/analyze">
                   <Plus className="w-4 h-4 mr-2" />
                   Start Your First Analysis
@@ -222,7 +262,7 @@ export default function HistoryPage() {
             className="space-y-3"
           >
             <AnimatePresence mode="popLayout">
-              {filteredAnalyses.map((analysis) => (
+              {analyses.map((analysis) => (
                 <motion.div
                   key={analysis.id}
                   layout
@@ -242,23 +282,50 @@ export default function HistoryPage() {
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-2">
-                            <ScoreBadge score={analysis.score} size="sm" />
+                          {/* Job Title and Company */}
+                          <div className="flex items-center gap-2 mb-1">
+                            <StatusBadge status={analysis.applicationStatus as ApplicationStatus} />
+                            <ScoreBadge score={analysis.score} size="sm" showLabel={false} />
                           </div>
-                          <h3 className="font-medium text-foreground truncate">
-                            {analysis.resumeFilename}
+                          <h3 className="font-semibold text-foreground truncate">
+                            {analysis.jobTitle || 'Untitled Position'}
                           </h3>
-                          <p className="text-sm text-foreground-secondary line-clamp-2 mt-1">
-                            {analysis.jobDescriptionPreview}...
-                          </p>
-                          <p className="text-xs text-foreground-muted mt-2 flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            {new Date(analysis.createdAt).toLocaleDateString('en-US', {
-                              year: 'numeric',
-                              month: 'short',
-                              day: 'numeric',
-                            })}
-                          </p>
+                          {analysis.companyName && (
+                            <p className="text-sm text-foreground-secondary flex items-center gap-1 mt-0.5">
+                              <Building2 className="w-3.5 h-3.5" />
+                              {analysis.companyName}
+                              {analysis.location && (
+                                <>
+                                  <span className="text-foreground-muted mx-1">·</span>
+                                  <MapPin className="w-3.5 h-3.5" />
+                                  {analysis.location}
+                                </>
+                              )}
+                            </p>
+                          )}
+                          {!analysis.companyName && (
+                            <p className="text-sm text-foreground-secondary truncate mt-0.5">
+                              {analysis.jobDescriptionPreview}...
+                            </p>
+                          )}
+                          <div className="flex items-center gap-3 text-xs text-foreground-muted mt-2">
+                            <span className="flex items-center gap-1">
+                              <FileText className="w-3 h-3" />
+                              {analysis.resumeFilename}
+                            </span>
+                            {analysis.dateApplied && (
+                              <span className="flex items-center gap-1">
+                                <Calendar className="w-3 h-3" />
+                                Applied {formatDate(analysis.dateApplied)}
+                              </span>
+                            )}
+                            {!analysis.dateApplied && (
+                              <span className="flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                {formatDate(analysis.createdAt)}
+                              </span>
+                            )}
+                          </div>
                         </div>
                         <button
                           onClick={(e) => {
@@ -296,12 +363,44 @@ export default function HistoryPage() {
                 >
                   <Card variant="elevated">
                     <CardHeader>
-                      <CardTitle>Analysis Details</CardTitle>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <CardTitle className="flex items-center gap-2">
+                            <Briefcase className="w-5 h-5" />
+                            {selectedAnalysis.jobTitle || 'Untitled Position'}
+                          </CardTitle>
+                          {selectedAnalysis.companyName && (
+                            <p className="text-foreground-secondary mt-1">
+                              {selectedAnalysis.companyName}
+                              {selectedAnalysis.location && ` · ${selectedAnalysis.location}`}
+                            </p>
+                          )}
+                        </div>
+                        <StatusSelector
+                          value={selectedAnalysis.applicationStatus as ApplicationStatus}
+                          onChange={(status) => handleStatusChange(selectedAnalysis.id, status)}
+                          disabled={updatingId === selectedAnalysis.id}
+                        />
+                      </div>
                     </CardHeader>
                     <CardContent className="space-y-6">
                       {/* Score */}
                       <div className="flex justify-center">
                         <ScoreGauge score={selectedAnalysis.score} size="lg" />
+                      </div>
+
+                      {/* Dates */}
+                      <div className="flex flex-wrap gap-4 text-sm">
+                        <div className="flex items-center gap-2 text-foreground-secondary">
+                          <Clock className="w-4 h-4" />
+                          Analyzed: {formatDate(selectedAnalysis.createdAt)}
+                        </div>
+                        {selectedAnalysis.dateApplied && (
+                          <div className="flex items-center gap-2 text-foreground-secondary">
+                            <Calendar className="w-4 h-4" />
+                            Applied: {formatDate(selectedAnalysis.dateApplied)}
+                          </div>
+                        )}
                       </div>
 
                       {/* Summary */}
@@ -376,7 +475,7 @@ export default function HistoryPage() {
                         <Eye className="w-8 h-8 text-foreground-muted" />
                       </div>
                       <p className="text-foreground-secondary">
-                        Select an analysis to view details
+                        Select an application to view details
                       </p>
                     </CardContent>
                   </Card>
