@@ -7,7 +7,7 @@
 
 import puppeteer, { type Browser } from 'puppeteer-core';
 import chromium from '@sparticuz/chromium';
-import type { AnalysisResult, KeyFindings } from '@jobmatch/shared';
+import type { AnalysisResult } from '../../types';
 
 export interface PdfGeneratorPort {
   generateReport(analysis: AnalysisResult): Promise<Buffer>;
@@ -304,21 +304,21 @@ export class PuppeteerPdfAdapter implements PdfGeneratorPort {
     <div class="section strengths">
       <h2>Key Strengths</h2>
       <ul class="list">
-        ${keyFindings.strengths.map((s) => `<li>${s}</li>`).join('')}
+        ${keyFindings.strengths.map((s: string) => `<li>${s}</li>`).join('')}
       </ul>
     </div>
 
     <div class="section gaps">
       <h2>Areas for Improvement</h2>
       <ul class="list">
-        ${keyFindings.gaps.map((g) => `<li>${g}</li>`).join('')}
+        ${keyFindings.gaps.map((g: string) => `<li>${g}</li>`).join('')}
       </ul>
     </div>
 
     <div class="section suggestions">
       <h2>Suggestions</h2>
       <ul class="list">
-        ${keyFindings.suggestions.map((s) => `<li>${s}</li>`).join('')}
+        ${keyFindings.suggestions.map((s: string) => `<li>${s}</li>`).join('')}
       </ul>
     </div>
 
