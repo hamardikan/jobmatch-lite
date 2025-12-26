@@ -164,61 +164,94 @@ export const authMiddleware = new Elysia({ name: 'auth' })
     return { success: true };
   })
 
-  // Social sign-in endpoint (initiates OAuth flow)
-  .post('/api/auth/sign-in/social', async ({ body, set }) => {
+  // Social sign-in endpoint (initiates OAuth flow) - POST for Better Auth client
+  .post('/api/auth/sign-in/social', async ({ request }) => {
     try {
-      const { provider, callbackURL } = body as { provider: string; callbackURL?: string };
-
-      if (!provider) {
-        set.status = 400;
-        return { error: 'Provider is required' };
-      }
-
-      // Get the OAuth authorization URL from Better Auth
-      const result = await auth.api.signInSocial({
-        body: {
-          provider,
-          callbackURL: callbackURL || '/dashboard',
-        },
-      });
-
-      return result;
+      // Delegate to Better Auth's handler which sets state cookies properly
+      return auth.handler(request);
     } catch (error) {
-      set.status = 400;
-      return { error: error instanceof Error ? error.message : 'Social sign in failed' };
+      console.error('Social sign-in error:', error);
+      return new Response(
+        JSON.stringify({ error: error instanceof Error ? error.message : 'Social sign in failed' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+  })
+
+  // Social sign-in via GET redirect - for cross-origin OAuth (browser navigation)
+  // This is the preferred method for cross-origin setups because cookies persist
+  .get('/api/auth/sign-in/social', async ({ request }) => {
+    const frontendURL = process.env.FRONTEND_URL || 'https://jobmatch-web-mauve.vercel.app';
+    try {
+      // Delegate to Better Auth's handler which sets state cookies and redirects to OAuth provider
+      return auth.handler(request);
+    } catch (error) {
+      console.error('Social sign-in redirect error:', error);
+      return new Response(null, {
+        status: 302,
+        headers: { 'Location': `${frontendURL}/login?error=oauth_init_failed` },
+      });
     }
   })
 
   // Google OAuth callback - delegate to Better Auth handler
-  .get('/api/auth/callback/google', async ({ request, set }) => {
+  .get('/api/auth/callback/google', async ({ request }) => {
     const frontendURL = process.env.FRONTEND_URL || 'https://jobmatch-web-mauve.vercel.app';
 
     try {
       // Use Better Auth's built-in handler for OAuth callback
       const response = await auth.handler(request);
 
-      // Check if response is a redirect
+      // Get cookies from Better Auth response
+      const setCookie = response.headers.get('set-cookie');
+
+      // If Better Auth returned a redirect
       if (response.status >= 300 && response.status < 400) {
-        const location = response.headers.get('location');
-        if (location) {
-          set.redirect = location;
-          return;
+        let location = response.headers.get('location');
+
+        // If redirect is to a relative path (like /dashboard), prepend frontend URL
+        if (location && !location.startsWith('http')) {
+          location = `${frontendURL}${location.startsWith('/') ? '' : '/'}${location}`;
         }
+
+        // Create redirect response with cookies
+        return new Response(null, {
+          status: 302,
+          headers: {
+            'Location': location || `${frontendURL}/dashboard`,
+            ...(setCookie ? { 'Set-Cookie': setCookie } : {}),
+          },
+        });
       }
 
-      // Copy cookies from Better Auth response
-      const setCookieHeader = response.headers.get('set-cookie');
-      if (setCookieHeader) {
-        set.headers = { 'set-cookie': setCookieHeader };
+      // If response is an error redirect from Better Auth
+      const responseText = await response.text();
+      if (responseText.includes('error') || response.url?.includes('error')) {
+        console.error('Better Auth OAuth error:', responseText);
+        return new Response(null, {
+          status: 302,
+          headers: {
+            'Location': `${frontendURL}/login?error=oauth_failed`,
+          },
+        });
       }
 
-      // Default redirect to dashboard
-      set.redirect = `${frontendURL}/dashboard`;
-      return;
+      // Success - redirect to dashboard with session cookie
+      return new Response(null, {
+        status: 302,
+        headers: {
+          'Location': `${frontendURL}/dashboard`,
+          ...(setCookie ? { 'Set-Cookie': setCookie } : {}),
+        },
+      });
     } catch (error) {
       console.error('Google OAuth callback error:', error);
-      set.redirect = `${frontendURL}/login?error=oauth_failed`;
-      return;
+      return new Response(null, {
+        status: 302,
+        headers: {
+          'Location': `${frontendURL}/login?error=oauth_failed`,
+        },
+      });
     }
   })
 

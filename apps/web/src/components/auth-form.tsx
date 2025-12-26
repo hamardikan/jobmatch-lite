@@ -67,19 +67,14 @@ export function AuthForm({ mode }: AuthFormProps) {
     }
   };
 
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignIn = () => {
     setIsLoading(true);
     setError(null);
 
-    try {
-      await signIn.social({
-        provider: 'google',
-        callbackURL: '/dashboard',
-      });
-    } catch (err) {
-      setError('Failed to sign in with Google');
-      setIsLoading(false);
-    }
+    // Use redirect-based OAuth instead of fetch-based
+    // This ensures cookies are set properly on the API domain for cross-origin setups
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    window.location.href = `${apiUrl}/api/auth/sign-in/social?provider=google&callbackURL=${encodeURIComponent('/dashboard')}`;
   };
 
   return (
