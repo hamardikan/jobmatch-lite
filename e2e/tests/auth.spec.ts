@@ -5,7 +5,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { LoginPage, RegisterPage, HomePage } from '../pages';
+import { LoginPage, RegisterPage, HomePage, DashboardPage } from '../pages';
 
 // Fresh test user for registration tests
 const FRESH_USER = {
@@ -27,8 +27,8 @@ test.describe('Authentication', () => {
         FRESH_USER.password
       );
 
-      // Should redirect to login or home after successful registration
-      await expect(page).toHaveURL(/\/(login)?$/);
+      // Should redirect to dashboard after successful registration (auto-login)
+      await expect(page).toHaveURL(/\/dashboard/);
     });
 
     test('should show error for duplicate email', async ({ page }) => {
@@ -71,7 +71,7 @@ test.describe('Authentication', () => {
         'TestPassword123!'
       );
 
-      await expect(page).toHaveURL('/');
+      await expect(page).toHaveURL(/\/dashboard/);
     });
 
     test('should show error for invalid credentials', async ({ page }) => {
@@ -113,12 +113,12 @@ test.describe('Authentication', () => {
   });
 
   test.describe('Session Management', () => {
-    test('should redirect unauthenticated users to login', async ({ page }) => {
+    test('should redirect unauthenticated users to login from dashboard', async ({ page }) => {
       // Clear any existing storage state
       await page.context().clearCookies();
 
       // Try to access protected page
-      await page.goto('/');
+      await page.goto('/dashboard');
 
       // Should redirect to login
       await expect(page).toHaveURL(/\/login$/);
@@ -131,12 +131,23 @@ test.describe('Authentication', () => {
 
       await expect(page).toHaveURL(/\/login$/);
     });
+
+    test('should show landing page for unauthenticated users on root', async ({ page }) => {
+      await page.context().clearCookies();
+
+      await page.goto('/');
+
+      // Should stay on landing page (not redirect to login)
+      await expect(page).toHaveURL('/');
+      // Landing page should have Get Started button
+      await expect(page.getByRole('link', { name: /get started/i })).toBeVisible();
+    });
   });
 
   test.describe('Logout', () => {
     test('should logout successfully', async ({ page }) => {
       const loginPage = new LoginPage(page);
-      const homePage = new HomePage(page);
+      const dashboardPage = new DashboardPage(page);
 
       // Login first
       await loginPage.goto();
@@ -145,11 +156,11 @@ test.describe('Authentication', () => {
         'TestPassword123!'
       );
 
-      // Verify we're on home page
-      await expect(page).toHaveURL('/');
+      // Verify we're on dashboard
+      await expect(page).toHaveURL(/\/dashboard/);
 
-      // Logout
-      await homePage.signOut();
+      // Logout via user menu
+      await dashboardPage.signOut();
 
       // Should be on login page
       await expect(page).toHaveURL(/\/login$/);
@@ -157,7 +168,7 @@ test.describe('Authentication', () => {
 
     test('should not access protected pages after logout', async ({ page }) => {
       const loginPage = new LoginPage(page);
-      const homePage = new HomePage(page);
+      const dashboardPage = new DashboardPage(page);
 
       // Login first
       await loginPage.goto();
@@ -167,10 +178,10 @@ test.describe('Authentication', () => {
       );
 
       // Logout
-      await homePage.signOut();
+      await dashboardPage.signOut();
 
-      // Try to access home page
-      await page.goto('/');
+      // Try to access dashboard
+      await page.goto('/dashboard');
 
       // Should redirect to login
       await expect(page).toHaveURL(/\/login$/);

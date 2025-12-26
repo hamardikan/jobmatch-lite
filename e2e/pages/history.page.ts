@@ -149,7 +149,7 @@ export class HistoryPage extends BasePage {
    */
   async goToNewAnalysis(): Promise<void> {
     await this.newAnalysisButton.click();
-    await this.page.waitForURL('/');
+    await this.page.waitForURL('**/analyze');
   }
 
   /**
@@ -158,6 +158,6 @@ export class HistoryPage extends BasePage {
   async startFirstAnalysis(): Promise<void> {
     const startButton = this.emptyState.getByRole('link', { name: /start your first analysis/i });
     await startButton.click();
-    await this.page.waitForURL('/');
+    await this.page.waitForURL('**/analyze');
   }
 }

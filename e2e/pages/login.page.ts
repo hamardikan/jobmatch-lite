@@ -55,11 +55,11 @@ export class LoginPage extends BasePage {
   }
 
   /**
-   * Login and wait for successful redirect to home
+   * Login and wait for successful redirect to dashboard
    */
   async loginAndWaitForRedirect(email: string, password: string): Promise<void> {
     await this.login(email, password);
-    await this.page.waitForURL('/');
+    await this.page.waitForURL('**/dashboard');
   }
 
   /**

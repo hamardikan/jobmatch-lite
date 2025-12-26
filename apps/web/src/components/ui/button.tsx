@@ -4,25 +4,62 @@ import { forwardRef, type ButtonHTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost';
-  size?: 'sm' | 'md' | 'lg';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'outline';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'icon';
   isLoading?: boolean;
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'primary', size = 'md', isLoading, disabled, children, ...props }, ref) => {
-    const baseStyles = 'inline-flex items-center justify-center font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none rounded-lg';
+    const baseStyles = cn(
+      'inline-flex items-center justify-center font-medium',
+      'transition-all duration-200',
+      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
+      'disabled:opacity-50 disabled:pointer-events-none',
+      'rounded-lg select-none'
+    );
 
     const variants = {
-      primary: 'bg-primary-600 text-white hover:bg-primary-700 focus-visible:ring-primary-500',
-      secondary: 'bg-slate-100 text-slate-900 hover:bg-slate-200 focus-visible:ring-slate-500',
-      ghost: 'hover:bg-slate-100 focus-visible:ring-slate-500',
+      primary: cn(
+        'bg-primary-900 text-white',
+        'hover:bg-primary-800 active:bg-primary-950',
+        'focus-visible:ring-primary-500',
+        'dark:bg-primary-100 dark:text-primary-900',
+        'dark:hover:bg-primary-200 dark:active:bg-primary-50'
+      ),
+      secondary: cn(
+        'bg-background-secondary text-foreground',
+        'hover:bg-primary-100 active:bg-primary-200',
+        'border border-border hover:border-border-hover',
+        'focus-visible:ring-primary-500',
+        'dark:hover:bg-primary-800/50 dark:active:bg-primary-800'
+      ),
+      ghost: cn(
+        'text-foreground-secondary',
+        'hover:bg-background-secondary hover:text-foreground',
+        'focus-visible:ring-primary-500'
+      ),
+      danger: cn(
+        'bg-danger-500 text-white',
+        'hover:bg-danger-600 active:bg-danger-700',
+        'focus-visible:ring-danger-500'
+      ),
+      outline: cn(
+        'border-2 border-primary-900 text-primary-900',
+        'hover:bg-primary-900 hover:text-white',
+        'active:bg-primary-950',
+        'focus-visible:ring-primary-500',
+        'dark:border-primary-100 dark:text-primary-100',
+        'dark:hover:bg-primary-100 dark:hover:text-primary-900'
+      ),
     };
 
     const sizes = {
-      sm: 'h-8 px-3 text-sm',
-      md: 'h-10 px-4 text-sm',
-      lg: 'h-12 px-6 text-base',
+      sm: 'h-8 px-3 text-sm gap-1.5',
+      md: 'h-10 px-4 text-sm gap-2',
+      lg: 'h-12 px-6 text-base gap-2',
+      xl: 'h-14 px-8 text-lg gap-2.5',
+      icon: 'h-10 w-10',
     };
 
     return (
@@ -34,7 +71,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       >
         {isLoading && (
           <svg
-            className="mr-2 h-4 w-4 animate-spin"
+            className="h-4 w-4 animate-spin"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"

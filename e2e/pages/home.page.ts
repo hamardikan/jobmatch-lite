@@ -49,7 +49,7 @@ export class HomePage extends BasePage {
     this.removeFileButton = page.getByRole('button', { name: /remove file/i });
 
     // Analysis
-    this.analyzeButton = page.getByRole('button', { name: /check resume match/i });
+    this.analyzeButton = page.getByRole('button', { name: /analyze match/i });
     this.loadingIndicator = page.getByTestId('loading-indicator');
     this.errorState = page.getByTestId('error-state');
     this.tryAgainButton = page.getByTestId('try-again-button');
@@ -66,7 +66,7 @@ export class HomePage extends BasePage {
   }
 
   async goto(): Promise<void> {
-    await this.page.goto('/');
+    await this.page.goto('/analyze');
   }
 
   async waitForReady(): Promise<void> {

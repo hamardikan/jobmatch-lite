@@ -1,52 +1,98 @@
 'use client';
 
-import { type HTMLAttributes } from 'react';
+import { type HTMLAttributes, forwardRef } from 'react';
 import { cn } from '@/lib/utils';
 
-export function Card({
-  className,
-  ...props
-}: HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div
-      className={cn(
-        'rounded-xl border border-slate-200 bg-white shadow-sm',
-        className
-      )}
-      {...props}
-    />
-  );
+interface CardProps extends HTMLAttributes<HTMLDivElement> {
+  variant?: 'default' | 'elevated' | 'interactive' | 'outline';
 }
 
-export function CardHeader({
-  className,
-  ...props
-}: HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div
-      className={cn('px-6 py-4 border-b border-slate-100', className)}
-      {...props}
-    />
-  );
-}
+export const Card = forwardRef<HTMLDivElement, CardProps>(
+  ({ className, variant = 'default', ...props }, ref) => {
+    const variants = {
+      default: 'bg-card border border-border shadow-soft',
+      elevated: 'bg-card border border-border shadow-medium',
+      interactive: cn(
+        'bg-card border border-border shadow-soft',
+        'hover:shadow-medium hover:border-border-hover',
+        'transition-all duration-200 cursor-pointer'
+      ),
+      outline: 'bg-transparent border border-border',
+    };
 
-export function CardTitle({
-  className,
-  ...props
-}: HTMLAttributes<HTMLHeadingElement>) {
-  return (
-    <h3
-      className={cn('text-lg font-semibold text-slate-900', className)}
-      {...props}
-    />
-  );
-}
+    return (
+      <div
+        ref={ref}
+        className={cn(
+          'rounded-xl text-card-foreground',
+          variants[variant],
+          className
+        )}
+        {...props}
+      />
+    );
+  }
+);
 
-export function CardContent({
-  className,
-  ...props
-}: HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div className={cn('px-6 py-4', className)} {...props} />
-  );
-}
+Card.displayName = 'Card';
+
+export const CardHeader = forwardRef<
+  HTMLDivElement,
+  HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn('px-6 py-4 border-b border-border', className)}
+    {...props}
+  />
+));
+
+CardHeader.displayName = 'CardHeader';
+
+export const CardTitle = forwardRef<
+  HTMLHeadingElement,
+  HTMLAttributes<HTMLHeadingElement>
+>(({ className, ...props }, ref) => (
+  <h3
+    ref={ref}
+    className={cn('text-lg font-semibold text-foreground', className)}
+    {...props}
+  />
+));
+
+CardTitle.displayName = 'CardTitle';
+
+export const CardDescription = forwardRef<
+  HTMLParagraphElement,
+  HTMLAttributes<HTMLParagraphElement>
+>(({ className, ...props }, ref) => (
+  <p
+    ref={ref}
+    className={cn('text-sm text-foreground-secondary mt-1', className)}
+    {...props}
+  />
+));
+
+CardDescription.displayName = 'CardDescription';
+
+export const CardContent = forwardRef<
+  HTMLDivElement,
+  HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div ref={ref} className={cn('px-6 py-4', className)} {...props} />
+));
+
+CardContent.displayName = 'CardContent';
+
+export const CardFooter = forwardRef<
+  HTMLDivElement,
+  HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn('px-6 py-4 border-t border-border', className)}
+    {...props}
+  />
+));
+
+CardFooter.displayName = 'CardFooter';

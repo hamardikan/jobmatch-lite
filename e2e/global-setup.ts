@@ -64,9 +64,9 @@ async function globalSetup(config: FullConfig): Promise<void> {
     await page.getByLabel('Email').fill(TEST_USER.email);
     await page.getByLabel('Password').fill(TEST_USER.password);
 
-    // Submit and wait for redirect
+    // Submit and wait for redirect to dashboard
     await page.getByRole('button', { name: /sign in/i }).click();
-    await page.waitForURL('/');
+    await page.waitForURL('**/dashboard');
 
     // Save auth state
     const authFile = path.join(authDir, 'user.json');

@@ -43,7 +43,7 @@ test.describe('Analysis History', () => {
       const isEmpty = await historyPage.isEmpty();
       if (isEmpty) {
         await historyPage.startFirstAnalysis();
-        await expect(page).toHaveURL('/');
+        await expect(page).toHaveURL(/\/analyze/);
       }
     });
   });
@@ -183,7 +183,7 @@ test.describe('Analysis History', () => {
 
       await historyPage.goToNewAnalysis();
 
-      await expect(page).toHaveURL('/');
+      await expect(page).toHaveURL(/\/analyze/);
     });
   });
 });

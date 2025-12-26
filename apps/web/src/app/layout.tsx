@@ -1,5 +1,6 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
+import { ThemeProvider } from '@/components/providers/theme-provider';
 import './globals.css';
 
 const inter = Inter({
@@ -8,9 +9,19 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'JobMatch Lite - Resume Match Analysis',
-  description: 'Analyze how well your resume matches job descriptions using AI',
-  keywords: ['resume', 'job matching', 'career', 'AI analysis'],
+  title: 'JobMatch Lite - AI Resume Matching',
+  description: 'Analyze how well your resume matches job descriptions using AI. Get instant feedback, identify gaps, and improve your chances.',
+  keywords: ['resume', 'job matching', 'career', 'AI analysis', 'job search'],
+  authors: [{ name: 'JobMatch Lite' }],
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#0f172a' },
+  ],
 };
 
 export default function RootLayout({
@@ -19,9 +30,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={`${inter.variable} font-sans antialiased`}>
-        {children}
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.variable} font-sans`}>
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

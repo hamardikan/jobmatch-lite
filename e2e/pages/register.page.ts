@@ -73,7 +73,7 @@ export class RegisterPage extends BasePage {
   }
 
   /**
-   * Register and wait for successful redirect to home or login
+   * Register and wait for successful redirect to dashboard
    */
   async registerAndWaitForRedirect(
     name: string,
@@ -81,8 +81,8 @@ export class RegisterPage extends BasePage {
     password: string
   ): Promise<void> {
     await this.register(name, email, password);
-    // Wait for redirect to either home (auto-login) or login page
-    await this.page.waitForURL(/\/(login)?$/);
+    // Wait for redirect to dashboard (auto-login after registration)
+    await this.page.waitForURL('**/dashboard');
   }
 
   /**

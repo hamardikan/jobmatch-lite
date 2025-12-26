@@ -2,6 +2,12 @@
 
 An AI-powered resume-to-job description matching application that analyzes how well a resume matches a job posting and generates downloadable PDF reports.
 
+## Live Demo
+
+- **Frontend**: https://jobmatch-web-mauve.vercel.app
+- **Backend API**: https://jobmatch-api-seven.vercel.app
+- **API Health**: https://jobmatch-api-seven.vercel.app/api/health
+
 ## Features
 
 - **Resume Analysis**: Upload PDF or DOCX resumes and compare against job descriptions
@@ -9,8 +15,12 @@ An AI-powered resume-to-job description matching application that analyzes how w
 - **Match Scoring**: Get a 0-100 match score with detailed explanation
 - **Key Findings**: Identify strengths, gaps, and actionable suggestions
 - **PDF Reports**: Generate and download professional PDF reports using Puppeteer
-- **Analysis History**: View past analyses (requires authentication)
-- **User Authentication**: Secure login with Better Auth
+- **Analysis History**: View, search, and manage past analyses
+- **User Dashboard**: Overview of your analysis stats and recent activity
+- **User Authentication**: Secure login/registration with Better Auth
+- **Dark/Light Mode**: Theme toggle with system preference support
+- **Responsive Design**: Works on desktop and mobile devices
+- **Animated UI**: Smooth transitions with Framer Motion
 
 ## Tech Stack
 
@@ -18,6 +28,9 @@ An AI-powered resume-to-job description matching application that analyzes how w
 - **Next.js 15** - React framework with App Router
 - **React 19** - UI library
 - **Tailwind CSS** - Styling
+- **Framer Motion** - Animations
+- **next-themes** - Dark mode support
+- **lucide-react** - Icon library
 - **TypeScript** - Type safety
 
 ### Backend
@@ -32,6 +45,19 @@ An AI-powered resume-to-job description matching application that analyzes how w
 - **OpenRouter API** - AI model gateway (Gemini Flash)
 - **unpdf** - PDF text extraction
 - **mammoth** - DOCX text extraction
+
+## Routes
+
+| Route | Description | Auth Required |
+|-------|-------------|---------------|
+| `/` | Landing page with features overview | No |
+| `/login` | User sign in | No |
+| `/register` | User registration | No |
+| `/dashboard` | User dashboard with stats | Yes |
+| `/analyze` | Resume analysis form | Yes |
+| `/history` | Past analyses list | Yes |
+| `/settings` | User settings (profile, preferences) | Yes |
+| `/compare` | Compare analyses (coming soon) | Yes |
 
 ## Prerequisites
 
@@ -122,12 +148,16 @@ bun run dev
 
 ## Usage
 
-1. **Register/Login**: Create an account or sign in
-2. **Paste Job Description**: Enter the job posting text (min 100 characters)
-3. **Upload Resume**: Upload a PDF or DOCX file (max 5MB)
-4. **Analyze**: Click "Check Resume Match"
-5. **View Results**: See your match score, strengths, gaps, and suggestions
-6. **Download Report**: Click "Download Report" for a PDF
+1. **Visit the Landing Page**: Go to the homepage to learn about the features
+2. **Create an Account**: Click "Get Started" to register
+3. **Dashboard**: View your analysis stats and recent activity
+4. **New Analysis**: Click "New Analysis" to start
+5. **Paste Job Description**: Enter the job posting text (min 100 characters)
+6. **Upload Resume**: Upload a PDF or DOCX file (max 5MB)
+7. **Analyze**: Click "Analyze Match" to get results
+8. **View Results**: See your match score, strengths, gaps, and suggestions
+9. **Download Report**: Click "Download Report" for a PDF
+10. **History**: View all your past analyses in the History page
 
 ## API Endpoints
 
@@ -158,11 +188,18 @@ jobmatch-lite/
 │   └── web/                    # Next.js frontend
 │       └── src/
 │           ├── app/            # App Router pages
+│           │   ├── (marketing)/  # Public pages (landing)
+│           │   ├── (auth)/       # Auth pages (login, register)
+│           │   └── (app)/        # Protected pages (dashboard, etc.)
 │           ├── components/     # React components
 │           ├── hooks/          # Custom hooks
 │           └── lib/            # Utilities & API client
 ├── packages/
 │   └── shared/                 # Shared types
+├── e2e/                        # Playwright E2E tests
+│   ├── pages/                  # Page objects
+│   ├── tests/                  # Test specs
+│   └── fixtures/               # Test fixtures
 └── docs/                       # Documentation
 ```
 
@@ -182,41 +219,49 @@ Key patterns:
 
 ## Testing
 
-Run all tests:
+### Unit & Integration Tests
 ```bash
-bun test
+bun test                    # Run all tests
+bun test tests/unit         # Unit tests only
+bun test tests/integration  # Integration tests
 ```
 
-Run specific tests:
+### E2E Tests (Playwright)
 ```bash
-bun test tests/unit          # Unit tests only
-bun test tests/integration   # Integration tests
+bun run e2e                 # Run E2E tests
+bun run e2e:ui              # Open Playwright UI
+bun run e2e:headed          # Run in headed mode
 ```
+
+E2E tests require Docker for the test database container.
 
 ## Deployment
 
-### Vercel (Recommended)
+Both apps are deployed to Vercel:
+- **API**: https://vercel.com/dikas-projects-fa33ee27/jobmatch-api
+- **Web**: https://vercel.com/dikas-projects-fa33ee27/jobmatch-web
 
-Both frontend and backend can be deployed to Vercel:
+### Deploy Commands
 
-1. Connect your GitHub repository to Vercel
-2. Set environment variables in Vercel dashboard
-3. Deploy frontend (`apps/web`) and backend (`apps/api`) as separate projects
+```bash
+# Deploy API
+cd apps/api && vercel --prod
 
-**Backend requirements:**
-- Set `bunVersion: "1.x"` in vercel.json
-- Configure `@sparticuz/chromium` for Puppeteer in serverless
+# Deploy Web
+cd apps/web && vercel --prod
+```
 
 ### Environment Variables for Production
 
-Set these in your deployment platform:
-
-- `DATABASE_URL` - Production PostgreSQL connection string
+**API (Vercel):**
+- `DATABASE_URL` - Production PostgreSQL connection string (Neon)
 - `OPENROUTER_API_KEY` - OpenRouter API key
-- `BETTER_AUTH_SECRET` - Random secret for auth
+- `BETTER_AUTH_SECRET` - Random secret for auth (32+ chars)
 - `BETTER_AUTH_URL` - Production API URL
 - `FRONTEND_URL` - Production frontend URL
-- `NEXT_PUBLIC_API_URL` - Production API URL (frontend)
+
+**Web (Vercel):**
+- `NEXT_PUBLIC_API_URL` - Production API URL
 
 ## License
 

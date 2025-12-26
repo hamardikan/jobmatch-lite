@@ -1,8 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSession, signOut } from '@/lib/auth-client';
+import { ChevronDown, History, Settings, LogOut, User } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export function UserMenu() {
   const router = useRouter();
@@ -11,83 +14,103 @@ export function UserMenu() {
 
   if (isPending) {
     return (
-      <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse" />
+      <div className="w-8 h-8 rounded-full bg-background-secondary animate-pulse" />
     );
   }
 
   if (!session?.user) {
-    return (
-      <div className="flex gap-2">
-        <a
-          href="/login"
-          className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
-        >
-          Sign In
-        </a>
-        <a
-          href="/register"
-          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
-        >
-          Sign Up
-        </a>
-      </div>
-    );
+    return null;
   }
 
   const handleSignOut = async () => {
     await signOut();
-    router.push('/login');
+    router.push('/');
     router.refresh();
   };
+
+  const initials = session.user.name?.[0]?.toUpperCase() || session.user.email[0].toUpperCase();
 
   return (
     <div className="relative" data-testid="user-menu">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-100"
+        className={cn(
+          'flex items-center gap-2 px-2 py-1.5 rounded-lg',
+          'hover:bg-background-secondary',
+          'transition-colors duration-200'
+        )}
         data-testid="user-menu-button"
       >
-        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-medium">
-          {session.user.name?.[0]?.toUpperCase() || session.user.email[0].toUpperCase()}
+        <div className="w-8 h-8 rounded-full bg-primary-900 dark:bg-primary-100 flex items-center justify-center text-white dark:text-primary-900 text-sm font-medium">
+          {initials}
         </div>
-        <span className="text-sm font-medium text-gray-700 hidden sm:block">
+        <span className="text-sm font-medium text-foreground hidden sm:block max-w-[120px] truncate">
           {session.user.name || session.user.email}
         </span>
-        <svg
-          className={`w-4 h-4 text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
+        <ChevronDown
+          className={cn(
+            'w-4 h-4 text-foreground-muted transition-transform duration-200',
+            isOpen && 'rotate-180'
+          )}
+        />
       </button>
 
       {isOpen && (
         <>
           <div
-            className="fixed inset-0 z-10"
+            className="fixed inset-0 z-40"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20 border border-gray-200">
-            <div className="px-4 py-2 border-b border-gray-100">
-              <p className="text-sm font-medium text-gray-900">{session.user.name}</p>
-              <p className="text-xs text-gray-500 truncate">{session.user.email}</p>
+          <div className="absolute right-0 mt-2 w-56 bg-card rounded-xl shadow-strong border border-border py-1 z-50 animate-slide-down">
+            {/* User info */}
+            <div className="px-4 py-3 border-b border-border">
+              <p className="text-sm font-medium text-foreground truncate">
+                {session.user.name || 'User'}
+              </p>
+              <p className="text-xs text-foreground-muted truncate">
+                {session.user.email}
+              </p>
             </div>
-            <a
-              href="/history"
-              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-              onClick={() => setIsOpen(false)}
-            >
-              Analysis History
-            </a>
-            <button
-              onClick={handleSignOut}
-              className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-              data-testid="sign-out-button"
-            >
-              Sign Out
-            </button>
+
+            {/* Menu items */}
+            <div className="py-1">
+              <Link
+                href="/dashboard"
+                className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground-secondary hover:bg-background-secondary hover:text-foreground transition-colors"
+                onClick={() => setIsOpen(false)}
+              >
+                <User className="w-4 h-4" />
+                Dashboard
+              </Link>
+              <Link
+                href="/history"
+                className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground-secondary hover:bg-background-secondary hover:text-foreground transition-colors"
+                onClick={() => setIsOpen(false)}
+              >
+                <History className="w-4 h-4" />
+                Analysis History
+              </Link>
+              <Link
+                href="/settings"
+                className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground-secondary hover:bg-background-secondary hover:text-foreground transition-colors"
+                onClick={() => setIsOpen(false)}
+              >
+                <Settings className="w-4 h-4" />
+                Settings
+              </Link>
+            </div>
+
+            {/* Sign out */}
+            <div className="border-t border-border py-1">
+              <button
+                onClick={handleSignOut}
+                className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-danger-600 dark:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-700/10 transition-colors"
+                data-testid="sign-out-button"
+              >
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </button>
+            </div>
           </div>
         </>
       )}
