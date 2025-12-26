@@ -178,7 +178,7 @@ export default function SettingsPage() {
                   <div>
                     <p className="font-medium text-foreground">Theme</p>
                     <p className="text-sm text-foreground-secondary">
-                      Choose light, dark, or system theme
+                      Toggle between light and dark mode
                     </p>
                   </div>
                   <ThemeToggle />

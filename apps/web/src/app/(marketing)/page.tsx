@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { motion } from 'framer-motion';
 import { LandingHeader } from '@/components/layout/header';
 import { LinkButton } from '@/components/ui/link-button';
@@ -14,6 +15,12 @@ import {
   ArrowRight,
   ChevronDown,
 } from 'lucide-react';
+
+// Dynamic import for Three.js scene to avoid SSR issues and improve initial load
+const ParticleScene = dynamic(
+  () => import('@/components/three/particle-scene').then((mod) => mod.ParticleScene),
+  { ssr: false }
+);
 
 // Animation variants
 const fadeInUp = {
@@ -44,11 +51,10 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 lg:pt-40 lg:pb-32 overflow-hidden">
-        {/* Background decoration */}
-        <div className="absolute inset-0 -z-10">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary-500/5 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent-500/5 rounded-full blur-3xl" />
-        </div>
+        {/* Three.js Particle Background */}
+        <ParticleScene />
+        {/* Gradient overlay for content readability */}
+        <div className="absolute inset-0 -z-5 bg-gradient-to-b from-background/30 via-background/60 to-background pointer-events-none" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-4xl mx-auto">
