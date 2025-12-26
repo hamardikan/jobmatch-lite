@@ -95,8 +95,8 @@ export const authMiddleware = new Elysia({ name: 'auth' })
         cookie['better-auth.session_token'].set({
           value: result.token as string,
           httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax',
+          secure: true, // Always secure for cross-origin
+          sameSite: 'none', // Required for cross-origin cookies
           path: '/',
           maxAge: 60 * 60 * 24 * 7, // 7 days
         });
@@ -122,8 +122,8 @@ export const authMiddleware = new Elysia({ name: 'auth' })
         cookie['better-auth.session_token'].set({
           value: result.token as string,
           httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax',
+          secure: true, // Always secure for cross-origin
+          sameSite: 'none', // Required for cross-origin cookies
           path: '/',
           maxAge: 60 * 60 * 24 * 7, // 7 days
         });
@@ -151,8 +151,15 @@ export const authMiddleware = new Elysia({ name: 'auth' })
       headers: request.headers,
     });
 
-    // Clear the session cookie
-    cookie['better-auth.session_token'].remove();
+    // Clear the session cookie with proper cross-origin settings
+    cookie['better-auth.session_token'].set({
+      value: '',
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      path: '/',
+      maxAge: 0, // Expire immediately
+    });
 
     return { success: true };
   })

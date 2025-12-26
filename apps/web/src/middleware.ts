@@ -4,44 +4,39 @@ import type { NextRequest } from 'next/server';
 /**
  * Next.js Middleware for Authentication
  *
- * Provides server-side protection for routes before page rendering.
- * This prevents the flash of protected content for unauthenticated users.
+ * Since cookies are set by a different origin (API server), we cannot
+ * access them in server-side middleware. Instead, we do minimal checks
+ * here and rely on client-side auth guards in the app.
+ *
+ * The client-side auth (useSession hook) will redirect unauthenticated
+ * users when components mount.
  */
 
-// Routes that require authentication
-const protectedRoutes = ['/dashboard', '/analyze', '/history', '/settings', '/compare'];
-
 // Routes that should redirect to dashboard if already authenticated
+// We can check this client-side, so middleware just passes through
 const authRoutes = ['/login', '/register'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Check for Better Auth session cookie
-  // Better Auth uses 'better-auth.session_token' for session tracking
-  const sessionCookie = request.cookies.get('better-auth.session_token');
-  const hasSession = !!sessionCookie?.value;
-
-  // Check if accessing a protected route
-  const isProtectedRoute = protectedRoutes.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`)
-  );
-
-  // Check if accessing auth routes (login/register)
+  // For auth routes, check if there's a session cookie hint
+  // This is just a UX optimization - real auth check happens client-side
   const isAuthRoute = authRoutes.some((route) => pathname === route);
 
-  // Redirect to login if accessing protected route without session
-  if (isProtectedRoute && !hasSession) {
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('callbackUrl', pathname);
-    return NextResponse.redirect(loginUrl);
+  if (isAuthRoute) {
+    // Check for any auth-related cookie as a hint
+    // The actual session validation happens on the API side
+    const hasSessionHint = request.cookies.has('better-auth.session_token');
+
+    if (hasSessionHint) {
+      // User might be logged in, redirect to dashboard
+      // If session is invalid, client-side will redirect back
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
   }
 
-  // Redirect to dashboard if accessing auth routes with active session
-  if (isAuthRoute && hasSession) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
-  }
-
+  // For all other routes (including protected), let them through
+  // Client-side auth guards will handle unauthenticated users
   return NextResponse.next();
 }
 

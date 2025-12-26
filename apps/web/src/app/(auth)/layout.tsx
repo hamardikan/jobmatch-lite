@@ -1,35 +1,31 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useSession } from '@/lib/auth-client';
-import { AppLayout } from '@/components/layout/app-layout';
 
 /**
- * Authenticated Layout
+ * Auth Layout
  *
- * This layout wraps all protected routes in the (app) group.
- * Handles client-side auth checks and redirects to login if unauthenticated.
+ * Wraps login/register pages. Redirects authenticated users to dashboard.
  */
-export default function AuthenticatedLayout({
+export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const { data: session, isPending } = useSession();
   const router = useRouter();
-  const pathname = usePathname();
 
   // Check if user is authenticated (session has user data)
   const isAuthenticated = session?.user?.id;
 
   useEffect(() => {
-    // Redirect to login if not authenticated (after loading completes)
-    if (!isPending && !isAuthenticated) {
-      const callbackUrl = encodeURIComponent(pathname);
-      router.replace(`/login?callbackUrl=${callbackUrl}`);
+    // Redirect to dashboard if already authenticated
+    if (!isPending && isAuthenticated) {
+      router.replace('/dashboard');
     }
-  }, [isAuthenticated, isPending, router, pathname]);
+  }, [isAuthenticated, isPending, router]);
 
   // Show loading state while checking auth
   if (isPending) {
@@ -43,17 +39,17 @@ export default function AuthenticatedLayout({
     );
   }
 
-  // Show redirecting state if no session
-  if (!isAuthenticated) {
+  // If authenticated, show redirecting (the useEffect will handle actual redirect)
+  if (isAuthenticated) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-10 h-10 border-4 border-primary-200 dark:border-primary-800 rounded-full animate-spin border-t-primary-600 dark:border-t-primary-400" />
-          <p className="text-foreground-secondary">Redirecting to login...</p>
+          <p className="text-foreground-secondary">Redirecting to dashboard...</p>
         </div>
       </div>
     );
   }
 
-  return <AppLayout>{children}</AppLayout>;
+  return <>{children}</>;
 }

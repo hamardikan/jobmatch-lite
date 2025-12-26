@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { signIn, signUp } from '@/lib/auth-client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -16,6 +16,7 @@ interface AuthFormProps {
 
 export function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,6 +25,9 @@ export function AuthForm({ mode }: AuthFormProps) {
     email: '',
     password: '',
   });
+
+  // Get callback URL from query params, default to dashboard
+  const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,7 +58,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         }
       }
 
-      router.push('/dashboard');
+      router.push(callbackUrl);
       router.refresh();
     } catch (err) {
       setError('An unexpected error occurred');
