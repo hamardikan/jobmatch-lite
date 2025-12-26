@@ -138,7 +138,7 @@ export const historyModule = new Elysia({ prefix: '/api/history' })
     }
   )
 
-  // Update application status
+  // Update application (status, job details, follow-up date)
   .patch(
     '/:id',
     async ({ user, params, body }) => {
@@ -151,6 +151,9 @@ export const historyModule = new Elysia({ prefix: '/api/history' })
         user.id,
         {
           applicationStatus: body.status,
+          jobTitle: body.jobTitle,
+          companyName: body.companyName,
+          location: body.location,
           dateApplied,
           followUpDate,
         }
@@ -183,14 +186,14 @@ export const historyModule = new Elysia({ prefix: '/api/history' })
     },
     {
       params: HistoryModel.idParam,
-      body: HistoryModel.updateStatusBody,
+      body: HistoryModel.updateBody,
       response: {
         200: HistoryModel.updateResponse,
       },
       detail: {
         tags: ['History'],
-        summary: 'Update application status',
-        description: 'Update the application status and follow-up date for a specific analysis.',
+        summary: 'Update application',
+        description: 'Update application status, job details, or follow-up date.',
       },
     }
   )

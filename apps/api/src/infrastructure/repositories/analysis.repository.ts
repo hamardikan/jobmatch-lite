@@ -7,7 +7,7 @@
 import { eq, desc, and, or, ilike, sql } from 'drizzle-orm';
 import { db } from '../db';
 import { analysis, type Analysis, type NewAnalysis } from '../db/schema';
-import type { SearchOptions, UpdateStatusData } from '../../application/ports/repository.port';
+import type { SearchOptions, UpdateData } from '../../application/ports/repository.port';
 
 export class AnalysisRepository {
   /**
@@ -140,7 +140,7 @@ export class AnalysisRepository {
   async updateByIdAndUserId(
     id: string,
     userId: string,
-    data: UpdateStatusData
+    data: UpdateData
   ): Promise<Analysis | undefined> {
     // Verify ownership first
     const existing = await this.findByIdAndUserId(id, userId);
@@ -148,14 +148,33 @@ export class AnalysisRepository {
       return undefined;
     }
 
+    // Build update object with only defined fields
+    const updateFields: Record<string, unknown> = {
+      updatedAt: new Date(),
+    };
+
+    if (data.applicationStatus !== undefined) {
+      updateFields.applicationStatus = data.applicationStatus;
+    }
+    if (data.jobTitle !== undefined) {
+      updateFields.jobTitle = data.jobTitle;
+    }
+    if (data.companyName !== undefined) {
+      updateFields.companyName = data.companyName;
+    }
+    if (data.location !== undefined) {
+      updateFields.location = data.location;
+    }
+    if (data.dateApplied !== undefined) {
+      updateFields.dateApplied = data.dateApplied;
+    }
+    if (data.followUpDate !== undefined) {
+      updateFields.followUpDate = data.followUpDate;
+    }
+
     const [result] = await db
       .update(analysis)
-      .set({
-        applicationStatus: data.applicationStatus,
-        dateApplied: data.dateApplied,
-        followUpDate: data.followUpDate,
-        updatedAt: new Date(),
-      })
+      .set(updateFields)
       .where(eq(analysis.id, id))
       .returning();
 

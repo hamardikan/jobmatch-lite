@@ -223,20 +223,27 @@ export async function getHistory(options: SearchHistoryOptions = {}): Promise<Hi
   return data.data;
 }
 
+export interface UpdateApplicationData {
+  status?: ApplicationStatus;
+  jobTitle?: string | null;
+  companyName?: string | null;
+  location?: string | null;
+  followUpDate?: string | null;
+}
+
 /**
- * Update application status
+ * Update application (status, job details, follow-up date)
  */
-export async function updateApplicationStatus(
+export async function updateApplication(
   id: string,
-  status: ApplicationStatus,
-  followUpDate?: string | null
+  data: UpdateApplicationData
 ): Promise<HistoryItem> {
   const response = await fetch(`${API_BASE_URL}/api/history/${id}`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ status, followUpDate }),
+    body: JSON.stringify(data),
     credentials: 'include',
   });
 
@@ -248,12 +255,23 @@ export async function updateApplicationStatus(
     throw new Error('Analysis not found');
   }
 
-  const data = await response.json();
-  if (!data.success) {
-    throw new Error(data.error?.message || 'Failed to update status');
+  const jsonData = await response.json();
+  if (!jsonData.success) {
+    throw new Error(jsonData.error?.message || 'Failed to update');
   }
 
-  return data.data;
+  return jsonData.data;
+}
+
+/**
+ * Update application status (convenience wrapper)
+ */
+export async function updateApplicationStatus(
+  id: string,
+  status: ApplicationStatus,
+  followUpDate?: string | null
+): Promise<HistoryItem> {
+  return updateApplication(id, { status, followUpDate });
 }
 
 /**

@@ -15,8 +15,11 @@ export interface SearchOptions {
   offset?: number;
 }
 
-export interface UpdateStatusData {
-  applicationStatus: ApplicationStatus;
+export interface UpdateData {
+  applicationStatus?: ApplicationStatus;
+  jobTitle?: string | null;
+  companyName?: string | null;
+  location?: string | null;
   dateApplied?: Date | null;
   followUpDate?: Date | null;
 }
@@ -59,7 +62,7 @@ export interface AnalysisRepositoryPort {
   updateByIdAndUserId(
     id: string,
     userId: string,
-    data: UpdateStatusData
+    data: UpdateData
   ): Promise<Analysis | undefined>;
 
   /**

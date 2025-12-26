@@ -32,12 +32,15 @@ export namespace HistoryModel {
   });
   export type IdParam = typeof idParam.static;
 
-  // Update status request body
-  export const updateStatusBody = t.Object({
-    status: applicationStatus,
+  // Update application request body (status and/or job details)
+  export const updateBody = t.Object({
+    status: t.Optional(applicationStatus),
+    jobTitle: t.Optional(t.Nullable(t.String())),
+    companyName: t.Optional(t.Nullable(t.String())),
+    location: t.Optional(t.Nullable(t.String())),
     followUpDate: t.Optional(t.Nullable(t.String({ format: 'date-time' }))),
   });
-  export type UpdateStatusBody = typeof updateStatusBody.static;
+  export type UpdateBody = typeof updateBody.static;
 
   // Single analysis response (with job tracker fields)
   export const analysisItem = t.Object({

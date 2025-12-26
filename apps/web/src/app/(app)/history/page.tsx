@@ -10,6 +10,7 @@ import { ScoreBadge, StatusBadge } from '@/components/ui/badge';
 import type { ApplicationStatus } from '@/components/ui/badge';
 import { StatusSelector } from '@/components/status-selector';
 import { ScoreGauge } from '@/components/score-gauge';
+import { EditableField } from '@/components/editable-field';
 import {
   Search,
   Trash2,
@@ -28,7 +29,7 @@ import {
 import { cn } from '@/lib/utils';
 import {
   getHistory,
-  updateApplicationStatus,
+  updateApplication,
   type HistoryItem,
   type ApplicationStatus as ApiApplicationStatus,
 } from '@/lib/api-client';
@@ -96,7 +97,7 @@ export default function HistoryPage() {
   const handleStatusChange = async (id: string, newStatus: ApplicationStatus) => {
     setUpdatingId(id);
     try {
-      const updated = await updateApplicationStatus(id, newStatus as ApiApplicationStatus);
+      const updated = await updateApplication(id, { status: newStatus as ApiApplicationStatus });
       setAnalyses((prev) =>
         prev.map((a) => (a.id === id ? updated : a))
       );
@@ -107,6 +108,20 @@ export default function HistoryPage() {
       setError(err instanceof Error ? err.message : 'Failed to update status');
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  const handleFieldUpdate = async (
+    id: string,
+    field: 'jobTitle' | 'companyName' | 'location',
+    value: string | null
+  ) => {
+    const updated = await updateApplication(id, { [field]: value });
+    setAnalyses((prev) =>
+      prev.map((a) => (a.id === id ? updated : a))
+    );
+    if (selectedAnalysis?.id === id) {
+      setSelectedAnalysis(updated);
     }
   };
 
@@ -363,18 +378,32 @@ export default function HistoryPage() {
                 >
                   <Card variant="elevated">
                     <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <CardTitle className="flex items-center gap-2">
-                            <Briefcase className="w-5 h-5" />
-                            {selectedAnalysis.jobTitle || 'Untitled Position'}
-                          </CardTitle>
-                          {selectedAnalysis.companyName && (
-                            <p className="text-foreground-secondary mt-1">
-                              {selectedAnalysis.companyName}
-                              {selectedAnalysis.location && ` · ${selectedAnalysis.location}`}
-                            </p>
-                          )}
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0 space-y-2">
+                          {/* Editable Job Title */}
+                          <EditableField
+                            value={selectedAnalysis.jobTitle}
+                            placeholder="Add job title..."
+                            onSave={(value) => handleFieldUpdate(selectedAnalysis.id, 'jobTitle', value)}
+                            icon={<Briefcase className="w-5 h-5" />}
+                            className="font-semibold text-lg text-foreground"
+                          />
+                          {/* Editable Company */}
+                          <EditableField
+                            value={selectedAnalysis.companyName}
+                            placeholder="Add company..."
+                            onSave={(value) => handleFieldUpdate(selectedAnalysis.id, 'companyName', value)}
+                            icon={<Building2 className="w-4 h-4" />}
+                            className="text-sm text-foreground-secondary"
+                          />
+                          {/* Editable Location */}
+                          <EditableField
+                            value={selectedAnalysis.location}
+                            placeholder="Add location..."
+                            onSave={(value) => handleFieldUpdate(selectedAnalysis.id, 'location', value)}
+                            icon={<MapPin className="w-4 h-4" />}
+                            className="text-sm text-foreground-secondary"
+                          />
                         </div>
                         <StatusSelector
                           value={selectedAnalysis.applicationStatus as ApplicationStatus}
