@@ -45,7 +45,7 @@ export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET,
   baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3001',
 
-  // Trust frontend origins for cross-origin requests
+  // Trust frontend origins for cross-origin requests (REQUIRED for social sign-in)
   trustedOrigins: [
     'https://jobmatch-web-mauve.vercel.app',
     'http://localhost:3000',
