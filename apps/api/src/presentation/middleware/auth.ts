@@ -42,7 +42,8 @@ export async function getAuthSession(
     })
   );
 
-  const rawToken = cookies['better-auth.session_token'];
+  // Check both cookie names: production uses __Secure- prefix, local uses plain name
+  const rawToken = cookies['better-auth.session_token'] || cookies['__Secure-better-auth.session_token'];
   if (!rawToken) {
     return null;
   }
