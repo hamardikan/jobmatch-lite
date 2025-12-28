@@ -61,7 +61,7 @@ export default function DashboardPage() {
 
         if (response.ok) {
           const data = await response.json();
-          const analyses: Analysis[] = data.data || [];
+          const analyses: Analysis[] = Array.isArray(data.data) ? data.data : [];
 
           // Calculate stats from analyses
           const totalAnalyses = analyses.length;
