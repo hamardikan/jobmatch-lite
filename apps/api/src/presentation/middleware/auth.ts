@@ -195,7 +195,7 @@ export const authMiddleware = new Elysia({ name: 'auth' })
 
   // Google OAuth callback - delegate to Better Auth handler
   .get('/api/auth/callback/google', async ({ request }) => {
-    const frontendURL = process.env.FRONTEND_URL || 'https://jobmatch-web-mauve.vercel.app';
+    const frontendURL = (process.env.FRONTEND_URL || 'https://jobmatch-web-mauve.vercel.app').trim();
 
     try {
       // Use Better Auth's built-in handler for OAuth callback
