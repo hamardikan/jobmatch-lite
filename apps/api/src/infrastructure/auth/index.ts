@@ -74,8 +74,8 @@ export const auth = betterAuth({
       enabled: true,
     },
     defaultCookieAttributes: {
-      sameSite: 'none' as const,
-      secure: true,
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' as const : 'lax' as const,
+      secure: process.env.NODE_ENV === 'production', // false for localhost (HTTP), true for production (HTTPS)
       httpOnly: true,
       path: '/',
     },

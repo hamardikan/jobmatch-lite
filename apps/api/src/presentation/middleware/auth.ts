@@ -42,10 +42,17 @@ export async function getAuthSession(
     })
   );
 
-  const token = cookies['better-auth.session_token'];
-  if (!token) {
+  const rawToken = cookies['better-auth.session_token'];
+  if (!rawToken) {
     return null;
   }
+
+  // URL-decode and extract just the token part (format: TOKEN.SIGNATURE)
+  const decodedToken = decodeURIComponent(rawToken);
+  const token = decodedToken.split('.')[0]; // Get just the token, not the signature
+
+  console.log('getAuthSession - rawToken:', rawToken.substring(0, 20) + '...');
+  console.log('getAuthSession - token for DB lookup:', token);
 
   // Direct database lookup
   const now = new Date();
@@ -92,11 +99,12 @@ export const authMiddleware = new Elysia({ name: 'auth' })
 
       // Set session cookie on sign-up (auto-login)
       if (result && 'token' in result) {
+        const isProduction = process.env.NODE_ENV === 'production';
         cookie['better-auth.session_token'].set({
           value: result.token as string,
           httpOnly: true,
-          secure: true, // Always secure for cross-origin
-          sameSite: 'none', // Required for cross-origin cookies
+          secure: isProduction,
+          sameSite: isProduction ? 'none' : 'lax',
           path: '/',
           maxAge: 60 * 60 * 24 * 7, // 7 days
         });
@@ -119,11 +127,12 @@ export const authMiddleware = new Elysia({ name: 'auth' })
 
       // Set session cookie
       if (result && 'token' in result) {
+        const isProduction = process.env.NODE_ENV === 'production';
         cookie['better-auth.session_token'].set({
           value: result.token as string,
           httpOnly: true,
-          secure: true, // Always secure for cross-origin
-          sameSite: 'none', // Required for cross-origin cookies
+          secure: isProduction,
+          sameSite: isProduction ? 'none' : 'lax',
           path: '/',
           maxAge: 60 * 60 * 24 * 7, // 7 days
         });
@@ -138,7 +147,12 @@ export const authMiddleware = new Elysia({ name: 'auth' })
 
   // Get session endpoint
   .get('/api/auth/get-session', async ({ request }) => {
+    const cookieHeader = request.headers.get('cookie');
+    console.log('get-session - cookie header:', cookieHeader);
+
     const authContext = await getAuthSession(request.headers);
+    console.log('get-session - authContext:', authContext ? 'found' : 'null');
+
     if (!authContext) {
       return { session: null, user: null };
     }
@@ -152,11 +166,12 @@ export const authMiddleware = new Elysia({ name: 'auth' })
     });
 
     // Clear the session cookie with proper cross-origin settings
+    const isProduction = process.env.NODE_ENV === 'production';
     cookie['better-auth.session_token'].set({
       value: '',
       httpOnly: true,
-      secure: true,
-      sameSite: 'none',
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
       path: '/',
       maxAge: 0, // Expire immediately
     });
@@ -186,55 +201,73 @@ export const authMiddleware = new Elysia({ name: 'auth' })
       // Use Better Auth's built-in handler for OAuth callback
       const response = await auth.handler(request);
 
-      // Get cookies from Better Auth response
-      const setCookie = response.headers.get('set-cookie');
+      // Clone headers to preserve all Set-Cookie values
+      const headers = new Headers();
 
-      // If Better Auth returned a redirect
+      // Copy all headers from Better Auth response
+      response.headers.forEach((value, key) => {
+        headers.append(key, value);
+      });
+
+      // Handle redirect - fix relative URLs
       if (response.status >= 300 && response.status < 400) {
         let location = response.headers.get('location');
 
-        // If redirect is to a relative path (like /dashboard), prepend frontend URL
+        // Prepend frontend URL for relative paths
         if (location && !location.startsWith('http')) {
           location = `${frontendURL}${location.startsWith('/') ? '' : '/'}${location}`;
         }
 
-        // Create redirect response with cookies
+        headers.set('Location', location || `${frontendURL}/dashboard`);
+
         return new Response(null, {
           status: 302,
-          headers: {
-            'Location': location || `${frontendURL}/dashboard`,
-            ...(setCookie ? { 'Set-Cookie': setCookie } : {}),
-          },
+          headers,
         });
       }
 
-      // If response is an error redirect from Better Auth
-      const responseText = await response.text();
-      if (responseText.includes('error') || response.url?.includes('error')) {
-        console.error('Better Auth OAuth error:', responseText);
-        return new Response(null, {
-          status: 302,
-          headers: {
-            'Location': `${frontendURL}/login?error=oauth_failed`,
-          },
-        });
+      return response;
+    } catch (error: any) {
+      // Better Auth throws APIError for redirects - handle it
+      if (error?.status === 'FOUND' || error?.statusCode === 302) {
+        const headers = new Headers();
+
+        // Get location from error
+        let location = error.headers?.get?.('location') || '/dashboard';
+        if (!location.startsWith('http')) {
+          location = `${frontendURL}${location.startsWith('/') ? '' : '/'}${location}`;
+        }
+        headers.set('Location', location);
+
+        // Copy Set-Cookie headers from error
+        if (error.headers) {
+          // Try getSetCookie first (standard API), fallback to get('set-cookie')
+          let cookies: string[] = [];
+          if (typeof error.headers.getSetCookie === 'function') {
+            cookies = error.headers.getSetCookie();
+          } else {
+            // Fallback: get set-cookie header (may be joined or array)
+            const setCookie = error.headers.get?.('set-cookie');
+            if (setCookie) {
+              // If it's already split, use it; otherwise it might be comma-joined
+              cookies = Array.isArray(setCookie) ? setCookie : [setCookie];
+            }
+          }
+
+          console.log('OAuth callback - setting cookies:', cookies);
+
+          cookies.forEach((cookie: string) => {
+            headers.append('Set-Cookie', cookie);
+          });
+        }
+
+        return new Response(null, { status: 302, headers });
       }
 
-      // Success - redirect to dashboard with session cookie
-      return new Response(null, {
-        status: 302,
-        headers: {
-          'Location': `${frontendURL}/dashboard`,
-          ...(setCookie ? { 'Set-Cookie': setCookie } : {}),
-        },
-      });
-    } catch (error) {
       console.error('Google OAuth callback error:', error);
       return new Response(null, {
         status: 302,
-        headers: {
-          'Location': `${frontendURL}/login?error=oauth_failed`,
-        },
+        headers: { 'Location': `${frontendURL}/login?error=oauth_failed` },
       });
     }
   })
