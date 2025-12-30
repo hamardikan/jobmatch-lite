@@ -30,20 +30,38 @@ interface SelectedAnalysis extends HistoryItem {
   slot: number;
 }
 
-// Helper to get a meaningful job display name
-const getJobDisplayName = (item: HistoryItem) => {
-  if (item.jobTitle) {
-    return item.companyName ? `${item.jobTitle} at ${item.companyName}` : item.jobTitle;
+// Helper to get a meaningful job title (NOT the resume filename)
+const getJobTitle = (item: HistoryItem) => {
+  // Only use jobTitle if it's different from resumeFilename
+  if (item.jobTitle && item.jobTitle !== item.resumeFilename) {
+    return item.jobTitle;
   }
-  // Fallback to truncated job description
-  return item.jobDescriptionPreview.length > 40
-    ? item.jobDescriptionPreview.substring(0, 40) + '...'
-    : item.jobDescriptionPreview;
+  // Extract from job description - first meaningful line
+  const firstLine = item.jobDescriptionPreview.split(/[\n.]/)[0].trim();
+  if (firstLine.length > 50) {
+    return firstLine.substring(0, 50) + '...';
+  }
+  return firstLine || 'Untitled Job';
 };
 
-// Short version for tight spaces
-const getJobShortName = (item: HistoryItem) => {
-  return item.jobTitle || item.jobDescriptionPreview.substring(0, 30) + '...';
+// Get company or location as subtitle
+const getJobSubtitle = (item: HistoryItem) => {
+  if (item.companyName) return item.companyName;
+  if (item.location) return item.location;
+  // Get second part of job description
+  const parts = item.jobDescriptionPreview.split(/[\n.]/);
+  if (parts.length > 1) {
+    const secondPart = parts[1].trim();
+    return secondPart.length > 50 ? secondPart.substring(0, 50) + '...' : secondPart;
+  }
+  return '';
+};
+
+// Full display name for tooltips
+const getJobDisplayName = (item: HistoryItem) => {
+  const title = getJobTitle(item);
+  const subtitle = getJobSubtitle(item);
+  return subtitle ? `${title} - ${subtitle}` : title;
 };
 
 export default function ComparePage() {
@@ -238,11 +256,15 @@ export default function ComparePage() {
                           </div>
                           <span className="text-xs text-foreground-muted">Match Score</span>
                         </div>
-                        <p className="text-sm font-medium text-foreground truncate">
-                          {selected.jobTitle || 'Untitled Job'}
+                        <p className="text-sm font-medium text-foreground truncate" title={getJobDisplayName(selected)}>
+                          {getJobTitle(selected)}
                         </p>
-                        <p className="text-xs text-foreground-secondary mt-1 line-clamp-2">
-                          {selected.companyName || selected.jobDescriptionPreview}
+                        <p className="text-xs text-foreground-secondary mt-1 truncate">
+                          {getJobSubtitle(selected)}
+                        </p>
+                        <p className="text-xs text-foreground-muted mt-2 flex items-center gap-1 truncate">
+                          <FileText className="w-3 h-3" />
+                          {selected.resumeFilename}
                         </p>
                       </div>
                       <button
@@ -300,11 +322,11 @@ export default function ComparePage() {
                                 {item.score}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-foreground truncate">
-                                  {item.jobTitle || 'Untitled Job'}
+                                <p className="text-sm font-medium text-foreground truncate" title={getJobDisplayName(item)}>
+                                  {getJobTitle(item)}
                                 </p>
                                 <p className="text-xs text-foreground-muted truncate">
-                                  {item.companyName || item.jobDescriptionPreview}
+                                  {getJobSubtitle(item) || item.resumeFilename}
                                 </p>
                               </div>
                             </div>
@@ -345,8 +367,8 @@ export default function ComparePage() {
                   </div>
                   <div className="text-center">
                     <p className="text-sm text-foreground-secondary mb-1">Best Match</p>
-                    <p className="text-lg font-semibold text-success-600 dark:text-success-400 truncate">
-                      {getJobShortName(insights.bestMatch)}
+                    <p className="text-lg font-semibold text-success-600 dark:text-success-400 truncate" title={getJobDisplayName(insights.bestMatch)}>
+                      {getJobTitle(insights.bestMatch)}
                     </p>
                     <p className="text-2xl font-bold text-success-600 dark:text-success-400">
                       {insights.bestMatch.score}%
@@ -376,7 +398,7 @@ export default function ComparePage() {
                     return (
                       <div key={analysis.id} className="flex items-center gap-4">
                         <div className="w-32 truncate text-sm font-medium text-foreground" title={getJobDisplayName(analysis)}>
-                          {getJobShortName(analysis)}
+                          {getJobTitle(analysis)}
                         </div>
                         <div className="flex-1 h-8 bg-background-secondary rounded-full overflow-hidden relative">
                           <motion.div
@@ -473,7 +495,7 @@ export default function ComparePage() {
                       <th className="text-left py-3 px-4 font-medium text-foreground-secondary">Category</th>
                       {selectedAnalyses.map((analysis) => (
                         <th key={analysis.id} className="text-left py-3 px-4 font-medium text-foreground truncate max-w-[200px]" title={getJobDisplayName(analysis)}>
-                          {getJobShortName(analysis)}
+                          {getJobTitle(analysis)}
                         </th>
                       ))}
                     </tr>
