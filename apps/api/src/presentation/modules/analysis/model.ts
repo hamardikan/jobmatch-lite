@@ -7,10 +7,11 @@ import { FILE_CONSTRAINTS, JOB_DESCRIPTION_CONSTRAINTS } from '../../../types';
 
 export namespace AnalysisModel {
   // Request schema
+  // Note: File type validation removed - Vercel serverless doesn't detect MIME types reliably
+  // Type checking is done in FileParserAdapter instead
   export const requestBody = t.Object({
     resume: t.File({
       maxSize: FILE_CONSTRAINTS.MAX_SIZE,
-      type: FILE_CONSTRAINTS.ALLOWED_TYPES as unknown as string[],
     }),
     jobDescription: t.String({
       minLength: JOB_DESCRIPTION_CONSTRAINTS.MIN_LENGTH,
