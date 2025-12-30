@@ -30,12 +30,33 @@ interface SelectedAnalysis extends HistoryItem {
   slot: number;
 }
 
+// Helper to get a meaningful job display name
+const getJobDisplayName = (item: HistoryItem) => {
+  if (item.jobTitle) {
+    return item.companyName ? `${item.jobTitle} at ${item.companyName}` : item.jobTitle;
+  }
+  // Fallback to truncated job description
+  return item.jobDescriptionPreview.length > 40
+    ? item.jobDescriptionPreview.substring(0, 40) + '...'
+    : item.jobDescriptionPreview;
+};
+
+// Short version for tight spaces
+const getJobShortName = (item: HistoryItem) => {
+  return item.jobTitle || item.jobDescriptionPreview.substring(0, 30) + '...';
+};
+
 export default function ComparePage() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedAnalyses, setSelectedAnalyses] = useState<SelectedAnalysis[]>([]);
   const [openDropdown, setOpenDropdown] = useState<number | null>(null);
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+
+  const toggleExpand = (key: string) => {
+    setExpandedSections(prev => ({ ...prev, [key]: !prev[key] }));
+  };
 
   // Fetch history on mount
   useEffect(() => {
@@ -218,10 +239,10 @@ export default function ComparePage() {
                           <span className="text-xs text-foreground-muted">Match Score</span>
                         </div>
                         <p className="text-sm font-medium text-foreground truncate">
-                          {selected.resumeFilename}
+                          {selected.jobTitle || 'Untitled Job'}
                         </p>
                         <p className="text-xs text-foreground-secondary mt-1 line-clamp-2">
-                          {selected.jobDescriptionPreview}
+                          {selected.companyName || selected.jobDescriptionPreview}
                         </p>
                       </div>
                       <button
@@ -280,10 +301,10 @@ export default function ComparePage() {
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium text-foreground truncate">
-                                  {item.resumeFilename}
+                                  {item.jobTitle || 'Untitled Job'}
                                 </p>
                                 <p className="text-xs text-foreground-muted truncate">
-                                  {item.jobDescriptionPreview}
+                                  {item.companyName || item.jobDescriptionPreview}
                                 </p>
                               </div>
                             </div>
@@ -325,7 +346,7 @@ export default function ComparePage() {
                   <div className="text-center">
                     <p className="text-sm text-foreground-secondary mb-1">Best Match</p>
                     <p className="text-lg font-semibold text-success-600 dark:text-success-400 truncate">
-                      {insights.bestMatch.resumeFilename}
+                      {getJobShortName(insights.bestMatch)}
                     </p>
                     <p className="text-2xl font-bold text-success-600 dark:text-success-400">
                       {insights.bestMatch.score}%
@@ -354,8 +375,8 @@ export default function ComparePage() {
 
                     return (
                       <div key={analysis.id} className="flex items-center gap-4">
-                        <div className="w-32 truncate text-sm font-medium text-foreground">
-                          {analysis.resumeFilename}
+                        <div className="w-32 truncate text-sm font-medium text-foreground" title={getJobDisplayName(analysis)}>
+                          {getJobShortName(analysis)}
                         </div>
                         <div className="flex-1 h-8 bg-background-secondary rounded-full overflow-hidden relative">
                           <motion.div
@@ -451,8 +472,8 @@ export default function ComparePage() {
                     <tr className="border-b border-border">
                       <th className="text-left py-3 px-4 font-medium text-foreground-secondary">Category</th>
                       {selectedAnalyses.map((analysis) => (
-                        <th key={analysis.id} className="text-left py-3 px-4 font-medium text-foreground truncate max-w-[200px]">
-                          {analysis.resumeFilename}
+                        <th key={analysis.id} className="text-left py-3 px-4 font-medium text-foreground truncate max-w-[200px]" title={getJobDisplayName(analysis)}>
+                          {getJobShortName(analysis)}
                         </th>
                       ))}
                     </tr>
@@ -475,63 +496,96 @@ export default function ComparePage() {
                     </tr>
                     <tr className="border-b border-border">
                       <td className="py-3 px-4 text-foreground-secondary align-top">Strengths</td>
-                      {selectedAnalyses.map((analysis) => (
-                        <td key={analysis.id} className="py-3 px-4 align-top">
-                          <ul className="space-y-1">
-                            {analysis.keyFindings.strengths.slice(0, 3).map((s, i) => (
-                              <li key={i} className="text-xs text-foreground-secondary flex items-start gap-1.5">
-                                <CheckCircle className="w-3 h-3 text-success-500 mt-0.5 shrink-0" />
-                                <span className="line-clamp-2">{s}</span>
-                              </li>
-                            ))}
-                            {analysis.keyFindings.strengths.length > 3 && (
-                              <li className="text-xs text-foreground-muted">
-                                +{analysis.keyFindings.strengths.length - 3} more
-                              </li>
-                            )}
-                          </ul>
-                        </td>
-                      ))}
+                      {selectedAnalyses.map((analysis) => {
+                        const key = `strengths-${analysis.id}`;
+                        const isExpanded = expandedSections[key];
+                        const items = analysis.keyFindings.strengths;
+                        const displayItems = isExpanded ? items : items.slice(0, 3);
+                        return (
+                          <td key={analysis.id} className="py-3 px-4 align-top">
+                            <ul className="space-y-1">
+                              {displayItems.map((s, i) => (
+                                <li key={i} className="text-xs text-foreground-secondary flex items-start gap-1.5">
+                                  <CheckCircle className="w-3 h-3 text-success-500 mt-0.5 shrink-0" />
+                                  <span className="line-clamp-2">{s}</span>
+                                </li>
+                              ))}
+                              {items.length > 3 && (
+                                <li>
+                                  <button
+                                    onClick={() => toggleExpand(key)}
+                                    className="text-xs text-primary-600 hover:text-primary-700 dark:text-primary-400 hover:underline"
+                                  >
+                                    {isExpanded ? 'Show less' : `+${items.length - 3} more`}
+                                  </button>
+                                </li>
+                              )}
+                            </ul>
+                          </td>
+                        );
+                      })}
                     </tr>
                     <tr className="border-b border-border">
                       <td className="py-3 px-4 text-foreground-secondary align-top">Gaps</td>
-                      {selectedAnalyses.map((analysis) => (
-                        <td key={analysis.id} className="py-3 px-4 align-top">
-                          <ul className="space-y-1">
-                            {analysis.keyFindings.gaps.slice(0, 3).map((g, i) => (
-                              <li key={i} className="text-xs text-foreground-secondary flex items-start gap-1.5">
-                                <XCircle className="w-3 h-3 text-danger-500 mt-0.5 shrink-0" />
-                                <span className="line-clamp-2">{g}</span>
-                              </li>
-                            ))}
-                            {analysis.keyFindings.gaps.length > 3 && (
-                              <li className="text-xs text-foreground-muted">
-                                +{analysis.keyFindings.gaps.length - 3} more
-                              </li>
-                            )}
-                          </ul>
-                        </td>
-                      ))}
+                      {selectedAnalyses.map((analysis) => {
+                        const key = `gaps-${analysis.id}`;
+                        const isExpanded = expandedSections[key];
+                        const items = analysis.keyFindings.gaps;
+                        const displayItems = isExpanded ? items : items.slice(0, 3);
+                        return (
+                          <td key={analysis.id} className="py-3 px-4 align-top">
+                            <ul className="space-y-1">
+                              {displayItems.map((g, i) => (
+                                <li key={i} className="text-xs text-foreground-secondary flex items-start gap-1.5">
+                                  <XCircle className="w-3 h-3 text-danger-500 mt-0.5 shrink-0" />
+                                  <span className="line-clamp-2">{g}</span>
+                                </li>
+                              ))}
+                              {items.length > 3 && (
+                                <li>
+                                  <button
+                                    onClick={() => toggleExpand(key)}
+                                    className="text-xs text-primary-600 hover:text-primary-700 dark:text-primary-400 hover:underline"
+                                  >
+                                    {isExpanded ? 'Show less' : `+${items.length - 3} more`}
+                                  </button>
+                                </li>
+                              )}
+                            </ul>
+                          </td>
+                        );
+                      })}
                     </tr>
                     <tr>
                       <td className="py-3 px-4 text-foreground-secondary align-top">Suggestions</td>
-                      {selectedAnalyses.map((analysis) => (
-                        <td key={analysis.id} className="py-3 px-4 align-top">
-                          <ul className="space-y-1">
-                            {analysis.keyFindings.suggestions.slice(0, 2).map((s, i) => (
-                              <li key={i} className="text-xs text-foreground-secondary flex items-start gap-1.5">
-                                <Lightbulb className="w-3 h-3 text-accent-500 mt-0.5 shrink-0" />
-                                <span className="line-clamp-2">{s}</span>
-                              </li>
-                            ))}
-                            {analysis.keyFindings.suggestions.length > 2 && (
-                              <li className="text-xs text-foreground-muted">
-                                +{analysis.keyFindings.suggestions.length - 2} more
-                              </li>
-                            )}
-                          </ul>
-                        </td>
-                      ))}
+                      {selectedAnalyses.map((analysis) => {
+                        const key = `suggestions-${analysis.id}`;
+                        const isExpanded = expandedSections[key];
+                        const items = analysis.keyFindings.suggestions;
+                        const displayItems = isExpanded ? items : items.slice(0, 2);
+                        return (
+                          <td key={analysis.id} className="py-3 px-4 align-top">
+                            <ul className="space-y-1">
+                              {displayItems.map((s, i) => (
+                                <li key={i} className="text-xs text-foreground-secondary flex items-start gap-1.5">
+                                  <Lightbulb className="w-3 h-3 text-accent-500 mt-0.5 shrink-0" />
+                                  <span className="line-clamp-2">{s}</span>
+                                </li>
+                              ))}
+                              {items.length > 2 && (
+                                <li>
+                                  <button
+                                    onClick={() => toggleExpand(key)}
+                                    className="text-xs text-primary-600 hover:text-primary-700 dark:text-primary-400 hover:underline"
+                                  >
+                                    {isExpanded ? 'Show less' : `+${items.length - 2} more`}
+                                  </button>
+                                </li>
+                              )}
+                            </ul>
+                          </td>
+                        );
+                      })}
                     </tr>
                   </tbody>
                 </table>
