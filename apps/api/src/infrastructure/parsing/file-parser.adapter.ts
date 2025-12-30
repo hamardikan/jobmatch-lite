@@ -2,10 +2,9 @@
  * File Parser Adapter
  *
  * Implements FileParserPort using unpdf for PDF and mammoth for DOCX
+ * Note: Libraries are lazy-imported to avoid serverless cold start issues
  */
 
-import { extractText } from 'unpdf';
-import mammoth from 'mammoth';
 import { FILE_CONSTRAINTS } from '../../types';
 import { AppError } from '../../shared/errors';
 import type { FileParserPort, ParsedFile } from '../../application/ports/file-parser.port';
@@ -63,6 +62,8 @@ export class FileParserAdapter implements FileParserPort {
   }
 
   private async parsePdf(buffer: ArrayBuffer): Promise<string> {
+    // Lazy import to avoid serverless cold start issues
+    const { extractText } = await import('unpdf');
     const uint8Array = new Uint8Array(buffer);
     const result = await extractText(uint8Array);
 
@@ -88,6 +89,8 @@ export class FileParserAdapter implements FileParserPort {
   }
 
   private async parseDocx(buffer: ArrayBuffer): Promise<string> {
+    // Lazy import to avoid serverless cold start issues
+    const mammoth = await import('mammoth');
     const result = await mammoth.extractRawText({
       buffer: Buffer.from(buffer),
     });

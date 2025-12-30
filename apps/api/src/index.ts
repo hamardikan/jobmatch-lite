@@ -30,50 +30,62 @@ const app = new Elysia()
 try {
   const { authMiddleware } = await import('./presentation/middleware/auth');
   app.use(authMiddleware);
+  console.log('✅ Auth middleware loaded');
 } catch (e) {
-  console.error('Failed to load auth middleware:', e);
+  console.error('❌ Failed to load auth middleware:', e);
 }
 
 try {
   const { errorHandler } = await import('./presentation/middleware/error-handler');
   app.use(errorHandler);
+  console.log('✅ Error handler loaded');
 } catch (e) {
-  console.error('Failed to load error handler:', e);
+  console.error('❌ Failed to load error handler:', e);
 }
 
 try {
   const { healthModule } = await import('./presentation/modules/health');
   app.use(healthModule);
+  console.log('✅ Health module loaded');
 } catch (e) {
-  console.error('Failed to load health module:', e);
+  console.error('❌ Failed to load health module:', e);
 }
 
 try {
   const { analysisModule } = await import('./presentation/modules/analysis');
   app.use(analysisModule);
+  console.log('✅ Analysis module loaded');
 } catch (e) {
-  console.error('Failed to load analysis module:', e);
+  console.error('❌ Failed to load analysis module:', e);
+  // Fallback route with helpful error
+  app.post('/api/analyze', () => ({
+    success: false,
+    error: { code: 'MODULE_LOAD_ERROR', message: 'Analysis module failed to load. Check server logs.' }
+  }));
 }
 
 try {
   const { historyModule } = await import('./presentation/modules/history');
   app.use(historyModule);
+  console.log('✅ History module loaded');
 } catch (e) {
-  console.error('Failed to load history module:', e);
+  console.error('❌ Failed to load history module:', e);
 }
 
 try {
   const { reportModule } = await import('./presentation/modules/report');
   app.use(reportModule);
+  console.log('✅ Report module loaded');
 } catch (e) {
-  console.error('Failed to load report module:', e);
+  console.error('❌ Failed to load report module:', e);
 }
 
 try {
   const { userModule } = await import('./presentation/modules/user');
   app.use(userModule);
+  console.log('✅ User module loaded');
 } catch (e) {
-  console.error('Failed to load user module:', e);
+  console.error('❌ Failed to load user module:', e);
 }
 
 export default app;
