@@ -57,14 +57,14 @@ An AI-powered resume-to-job description matching application that analyzes how w
 | `/analyze` | Resume analysis form | Yes |
 | `/history` | Past analyses list | Yes |
 | `/settings` | User settings (profile, preferences) | Yes |
-| `/compare` | Compare analyses (coming soon) | Yes |
+| `/compare` | Compare multiple analyses side-by-side | Yes |
 
 ## Prerequisites
 
 - [Bun](https://bun.sh/) v1.0 or higher
-- [Node.js](https://nodejs.org/) v18+ (for some dependencies)
-- PostgreSQL database (local or Neon)
-- Chrome/Chromium (for local PDF generation)
+- [Docker](https://www.docker.com/) (for local PostgreSQL) or a remote PostgreSQL database
+- [OpenRouter API key](https://openrouter.ai/keys) (free tier available)
+- Chrome/Chromium (optional, for local PDF generation)
 
 ## Installation
 
@@ -81,22 +81,34 @@ An AI-powered resume-to-job description matching application that analyzes how w
 
 3. **Set up environment variables**
 
-   Create `.env` files in both `apps/api` and `apps/web`:
+   Copy the example files and edit with your values:
+   ```bash
+   cp apps/api/.env.example apps/api/.env
+   cp apps/web/.env.example apps/web/.env
+   ```
+
+   Edit the `.env` files with your configuration:
 
    **apps/api/.env**
    ```env
    # Database
-   DATABASE_URL=postgresql://user:password@localhost:5432/jobmatch
+   DATABASE_URL=postgresql://jobmatch:jobmatch@localhost:5432/jobmatch
 
-   # OpenRouter API (get key from https://openrouter.ai)
+   # OpenRouter API (get key from https://openrouter.ai/keys)
    OPENROUTER_API_KEY=sk-or-v1-your-key-here
 
    # Better Auth
-   BETTER_AUTH_SECRET=your-secret-key-here
+   # Generate a secret: openssl rand -base64 32
+   BETTER_AUTH_SECRET=your-secret-key-at-least-32-characters-long
    BETTER_AUTH_URL=http://localhost:3001
 
    # Frontend URL (for CORS)
    FRONTEND_URL=http://localhost:3000
+
+   # Google OAuth (optional, for social login)
+   # Get credentials at: https://console.cloud.google.com/apis/credentials
+   GOOGLE_CLIENT_ID=your-google-client-id
+   GOOGLE_CLIENT_SECRET=your-google-client-secret
    ```
 
    **apps/web/.env**
@@ -106,15 +118,22 @@ An AI-powered resume-to-job description matching application that analyzes how w
 
 4. **Set up the database**
 
-   If using Docker for local PostgreSQL:
+   Start PostgreSQL with Docker:
    ```bash
    docker-compose up -d
    ```
 
-   Push the schema:
+   > **Note**: If you have PostgreSQL running locally on port 5432, stop it first or change the port in `docker-compose.yml`
+
+   Push the database schema:
    ```bash
    cd apps/api
    bun run db:push
+   ```
+
+   You should see output like:
+   ```
+   [✓] Changes applied
    ```
 
 ## Running Locally
@@ -256,12 +275,14 @@ cd apps/web && vercel --prod
 **API (Vercel):**
 - `DATABASE_URL` - Production PostgreSQL connection string (Neon)
 - `OPENROUTER_API_KEY` - OpenRouter API key
-- `BETTER_AUTH_SECRET` - Random secret for auth (32+ chars)
-- `BETTER_AUTH_URL` - Production API URL
-- `FRONTEND_URL` - Production frontend URL
+- `BETTER_AUTH_SECRET` - Random secret for auth (32+ chars, use `openssl rand -base64 32`)
+- `BETTER_AUTH_URL` - Production API URL (e.g., https://jobmatch-api-seven.vercel.app)
+- `FRONTEND_URL` - Production frontend URL (e.g., https://jobmatch-web-mauve.vercel.app)
+- `GOOGLE_CLIENT_ID` - (Optional) Google OAuth client ID
+- `GOOGLE_CLIENT_SECRET` - (Optional) Google OAuth client secret
 
 **Web (Vercel):**
-- `NEXT_PUBLIC_API_URL` - Production API URL
+- `NEXT_PUBLIC_API_URL` - Production API URL (e.g., https://jobmatch-api-seven.vercel.app)
 
 ## License
 
