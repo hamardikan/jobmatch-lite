@@ -17,6 +17,9 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",
+    "@testcontainers/postgresql": "^11.11.0",
+    "postgres": "^3.4.7",
+    "testcontainers": "^11.11.0",
     "turbo": "^2.3.0",
     "typescript": "^5.7.0"
   },
