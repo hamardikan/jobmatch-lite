@@ -6,9 +6,29 @@
 
 import { Elysia } from 'elysia';
 import { cors } from '@elysiajs/cors';
+import { openapi } from '@elysiajs/openapi';
 
-// Build the base app with CORS - allow all origins for now
+// Build the base app with CORS and OpenAPI
 const app = new Elysia()
+  .use(
+    openapi({
+      documentation: {
+        info: {
+          title: 'JobMatch Lite API',
+          version: '1.0.0',
+          description: 'Resume-to-job description matching API with AI-powered analysis',
+        },
+        tags: [
+          { name: 'Analysis', description: 'Resume analysis endpoints' },
+          { name: 'History', description: 'Analysis history endpoints' },
+          { name: 'Report', description: 'PDF report generation' },
+          { name: 'Auth', description: 'Authentication endpoints' },
+          { name: 'User', description: 'User management endpoints' },
+          { name: 'Health', description: 'Health check' },
+        ],
+      },
+    })
+  )
   .use(
     cors({
       origin: [
@@ -24,6 +44,7 @@ const app = new Elysia()
   .get('/', () => ({
     message: 'JobMatch Lite API',
     version: '1.0.0',
+    docs: '/openapi',
   }));
 
 // Load modules dynamically to handle potential import issues

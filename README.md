@@ -6,6 +6,7 @@ An AI-powered resume-to-job description matching application that analyzes how w
 
 - **Frontend**: https://jobmatch-web-mauve.vercel.app
 - **Backend API**: https://jobmatch-api-seven.vercel.app
+- **API Docs**: https://jobmatch-api-seven.vercel.app/openapi
 - **API Health**: https://jobmatch-api-seven.vercel.app/api/health
 
 ## Features
@@ -163,6 +164,7 @@ bun run dev
 
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:3001
+- **API Docs**: http://localhost:3001/openapi
 - **Health Check**: http://localhost:3001/api/health
 
 ## Usage
