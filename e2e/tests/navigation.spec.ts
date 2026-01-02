@@ -5,6 +5,7 @@
  */
 
 import { test, expect } from '../fixtures/auth';
+import { test as baseTest, expect as baseExpect } from '@playwright/test';
 import { DashboardPage, ComparePage, LandingPage } from '../pages';
 
 test.describe('Navigation', () => {
@@ -135,28 +136,28 @@ test.describe('Navigation', () => {
   });
 });
 
-test.describe('Navigation - Unauthenticated', () => {
-  test.use({ storageState: { cookies: [], origins: [] } });
-
-  test('should show landing page for root URL', async ({ page }) => {
+// Use base test (not auth fixture) for unauthenticated tests
+baseTest.describe('Navigation - Unauthenticated', () => {
+  baseTest('should show landing page for root URL', async ({ page }) => {
     const landingPage = new LandingPage(page);
     await landingPage.goto();
 
     // Should show landing page elements
-    expect(await landingPage.isHeroVisible()).toBe(true);
-    await expect(landingPage.getStartedButton).toBeVisible();
+    baseExpect(await landingPage.isHeroVisible()).toBe(true);
+    await baseExpect(landingPage.getStartedButton).toBeVisible();
   });
 
-  test('should redirect protected routes to login', async ({ page }) => {
+  baseTest('should redirect protected routes to login', async ({ page }) => {
     const protectedRoutes = ['/dashboard', '/analyze', '/history', '/settings', '/compare'];
 
     for (const route of protectedRoutes) {
       await page.goto(route);
-      await expect(page).toHaveURL(/\/login/);
+      await baseExpect(page).toHaveURL(/\/login/);
     }
   });
 });
 
+// Use auth fixture for mobile tests (still needs authentication)
 test.describe('Navigation - Mobile', () => {
   test.use({ viewport: { width: 375, height: 812 } }); // iPhone X viewport
 

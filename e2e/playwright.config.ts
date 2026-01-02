@@ -41,7 +41,7 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
       timeout: 120000,
       env: {
-        DATABASE_URL: process.env.E2E_DATABASE_URL || 'postgresql://e2e:e2e@localhost:5432/jobmatch_e2e',
+        DATABASE_URL: 'postgresql://e2e:e2e@localhost:5433/jobmatch_e2e',
         BETTER_AUTH_SECRET: 'e2e-test-secret-at-least-32-characters-long-here',
         BETTER_AUTH_URL: 'http://localhost:3001',
         OPENROUTER_API_KEY: 'mock-key-for-e2e-tests',

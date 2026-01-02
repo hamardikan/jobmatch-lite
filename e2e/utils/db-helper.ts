@@ -6,28 +6,33 @@
 
 import { PostgreSqlContainer, StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 import postgres from 'postgres';
-import { createHash } from 'crypto';
+
+// Fixed port for E2E database (use 5433 to avoid conflict with local postgres)
+const E2E_DB_PORT = 5433;
 
 let container: StartedPostgreSqlContainer | null = null;
 let connectionString: string | null = null;
 
 /**
  * Start a PostgreSQL container for E2E tests
+ * Uses a fixed port so the webServer config can reference it statically
  */
 export async function startE2EDatabase(): Promise<string> {
   if (container && connectionString) {
     return connectionString;
   }
 
-  console.log('[E2E] Starting PostgreSQL container...');
+  console.log('[E2E] Starting PostgreSQL container on port ' + E2E_DB_PORT + '...');
 
   container = await new PostgreSqlContainer('postgres:16-alpine')
     .withDatabase('jobmatch_e2e')
     .withUsername('e2e')
     .withPassword('e2e')
+    .withExposedPorts({ container: 5432, host: E2E_DB_PORT })
     .start();
 
-  connectionString = container.getConnectionUri();
+  // Use fixed port connection string for consistency
+  connectionString = `postgresql://e2e:e2e@localhost:${E2E_DB_PORT}/jobmatch_e2e`;
   console.log('[E2E] PostgreSQL container started');
 
   return connectionString;
@@ -132,8 +137,11 @@ export async function seedTestUser(userData: {
   const userId = `user_${Date.now()}`;
   const accountId = `account_${Date.now()}`;
 
-  // Hash the password (simple hash for testing - better-auth uses bcrypt internally)
-  const hashedPassword = createHash('sha256').update(userData.password).digest('hex');
+  // Hash the password using Bun.password (bcrypt compatible, same as Better Auth)
+  const hashedPassword = await Bun.password.hash(userData.password, {
+    algorithm: 'bcrypt',
+    cost: 10,
+  });
 
   await sql`
     INSERT INTO "user" (id, name, email, email_verified)

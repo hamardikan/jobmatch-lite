@@ -5,6 +5,7 @@
  */
 
 import { test, expect } from '../fixtures/auth';
+import { test as baseTest, expect as baseExpect } from '@playwright/test';
 import { DashboardPage } from '../pages';
 
 test.describe('Dashboard', () => {
@@ -85,11 +86,10 @@ test.describe('Dashboard', () => {
   });
 });
 
-test.describe('Dashboard - Unauthenticated', () => {
-  test.use({ storageState: { cookies: [], origins: [] } });
-
-  test('should redirect to login when not authenticated', async ({ page }) => {
+// Use base test (not auth fixture) for unauthenticated tests
+baseTest.describe('Dashboard - Unauthenticated', () => {
+  baseTest('should redirect to login when not authenticated', async ({ page }) => {
     await page.goto('/dashboard');
-    await expect(page).toHaveURL(/\/login/);
+    await baseExpect(page).toHaveURL(/\/login/);
   });
 });

@@ -5,15 +5,15 @@
  * 1. Start PostgreSQL container
  * 2. Run migrations
  * 3. Seed test user
- * 4. Login and save auth state
+ *
+ * Note: Authentication is handled per-test via the auth fixture.
+ * This avoids timing issues with webServer startup.
  */
 
-import { chromium, FullConfig } from '@playwright/test';
+import { FullConfig } from '@playwright/test';
 import { startE2EDatabase, migrateE2EDatabase, seedTestUser } from './utils/db-helper';
-import * as fs from 'fs';
-import * as path from 'path';
 
-// Test user credentials
+// Test user credentials - exported for use in fixtures
 export const TEST_USER = {
   name: 'Test User',
   email: 'e2e-test@example.com',
@@ -26,7 +26,7 @@ async function globalSetup(config: FullConfig): Promise<void> {
   // Step 1: Start database container
   console.log('📦 Starting PostgreSQL container...');
   const connectionString = await startE2EDatabase();
-  console.log('✅ Database started\n');
+  console.log('✅ Database started:', connectionString, '\n');
 
   // Store connection string for API to use
   process.env.DATABASE_URL = connectionString;
@@ -40,44 +40,6 @@ async function globalSetup(config: FullConfig): Promise<void> {
   console.log('👤 Seeding test user...');
   await seedTestUser(TEST_USER);
   console.log('✅ Test user created\n');
-
-  // Step 4: Login and save auth state
-  console.log('🔐 Logging in and saving auth state...');
-
-  // Ensure .auth directory exists
-  const authDir = path.join(__dirname, '.auth');
-  if (!fs.existsSync(authDir)) {
-    fs.mkdirSync(authDir, { recursive: true });
-  }
-
-  // Launch browser and login
-  const browser = await chromium.launch();
-  const context = await browser.newContext();
-  const page = await context.newPage();
-
-  try {
-    // Navigate to login page
-    const baseURL = config.projects[0].use.baseURL || 'http://localhost:3000';
-    await page.goto(`${baseURL}/login`);
-
-    // Fill in login form
-    await page.getByLabel('Email').fill(TEST_USER.email);
-    await page.getByLabel('Password').fill(TEST_USER.password);
-
-    // Submit and wait for redirect to dashboard
-    await page.getByRole('button', { name: /sign in/i }).click();
-    await page.waitForURL('**/dashboard');
-
-    // Save auth state
-    const authFile = path.join(authDir, 'user.json');
-    await context.storageState({ path: authFile });
-    console.log('✅ Auth state saved\n');
-  } catch (error) {
-    console.error('❌ Failed to setup auth state:', error);
-    throw error;
-  } finally {
-    await browser.close();
-  }
 
   console.log('✅ Global setup complete!\n');
 }
